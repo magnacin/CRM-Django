@@ -39,7 +39,7 @@ class VentaAdmin(admin.ModelAdmin):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('venta', 'descripcion', 'cantidad', 'precio_unitario')
+    list_display = ('descripcion', 'cantidad', 'precio_unitario')
 
 @admin.register(ModuloBolsaAire)
 class ModuloBolsaAireAdmin(admin.ModelAdmin):

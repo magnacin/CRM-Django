@@ -59,3 +59,11 @@ class DetalleCotizacionForm(forms.ModelForm):
         model = DetalleCotizacion
         fields = ['producto', 'cantidad', 'precio_unitario', 'precio_total']
 
+# Productos:
+from .models import Producto
+
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = ['descripcion', 'cantidad', 'precio_unitario']
+

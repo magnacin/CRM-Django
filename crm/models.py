@@ -86,7 +86,6 @@ class Venta(models.Model):
 
 # Modelo Producto (detalle de venta)
 class Producto(models.Model):
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
     descripcion = models.CharField(max_length=200)
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
