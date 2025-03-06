@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Listado de Cotizaciones</title>
+  </head>
+  <body>
+    <h2>Cotizaciones Realizadas</h2>
+    <table border="1">
+      <tr>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Vehículo</th>
+        <th>Total</th>
+      </tr>
+      {% for cotizacion in cotizaciones %}
+      <tr>
+        <td>{{ cotizacion.fecha }}</td>
+        <td>
+          {{ cotizacion.cliente.nombre }} {{ cotizacion.cliente.apellido }}
+        </td>
+        <td>
+          {{ cotizacion.vehiculo.marca }} {{ cotizacion.vehiculo.modelo }} - {{
+          cotizacion.vehiculo.anio }}
+        </td>
+        <td>${{ cotizacion.total_general }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">No hay cotizaciones registradas.</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <a href="{% url 'registrar_cotizacion' %}">Registrar nueva cotización</a>
+  </body>
+</html>

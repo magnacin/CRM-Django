@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Catálogo de Servicios</title>
+  </head>
+  <body>
+    <h2>Catálogo de Servicios</h2>
+    <table border="1">
+      <tr>
+        <th>Nombre del Servicio</th>
+        <th>Precio Base</th>
+        <th>Acciones</th>
+      </tr>
+      {% for servicio in servicios %}
+      <tr>
+        <td>{{ servicio.nombre_servicio }}</td>
+        <td>${{ servicio.precio_base }}</td>
+        <td>
+          <a href="{% url 'editar_servicio_catalogo' servicio.pk %}">Editar</a>
+          |
+          <a href="{% url 'eliminar_servicio_catalogo' servicio.pk %}"
+            >Eliminar</a
+          >
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3">No hay servicios registrados.</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <a href="{% url 'registrar_servicio_catalogo' %}"
+      >Registrar nuevo servicio</a
+    >
+  </body>
+</html>

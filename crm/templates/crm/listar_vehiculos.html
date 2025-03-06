@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Listado de Vehículos</title>
+  </head>
+  <body>
+    <h2>Vehículos Registrados</h2>
+    <table border="1">
+      <tr>
+        <th>Cliente</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Año</th>
+        <th>VIN</th>
+        <th>Tipo de Motor</th>
+      </tr>
+      {% for vehiculo in vehiculos %}
+      <tr>
+        <td>{{ vehiculo.cliente.nombre }} {{ vehiculo.cliente.apellido }}</td>
+        <td>{{ vehiculo.marca }}</td>
+        <td>{{ vehiculo.modelo }}</td>
+        <td>{{ vehiculo.anio }}</td>
+        <td>{{ vehiculo.vin }}</td>
+        <td>{{ vehiculo.get_tipo_motor_display }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6">No hay vehículos registrados.</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <a href="{% url 'registrar_vehiculo' %}">Registrar nuevo vehículo</a>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Registrar Servicio</title>
+  </head>
+  <body>
+    <h2>Registrar Servicio</h2>
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }}
+
+      <h3>Detalles del Servicio</h3>
+      {{ formset.management_form }} {% for form in formset %} {{ form.as_p }}
+      {%endfor %}
+
+      <button type="submit">Guardar Servicio</button>
+    </form>
+    <a href="{% url 'listar_servicios' %}">Regresar al listado de servicios</a>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Listado de Servicios</title>
+  </head>
+  <body>
+    <h2>Servicios Realizados</h2>
+    <table border="1">
+      <tr>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Vehículo</th>
+      </tr>
+      {% for servicio in servicios %}
+      <tr>
+        <td>{{ servicio.fecha_servicio }}</td>
+        <td>{{ servicio.cliente.nombre }} {{ servicio.cliente.apellido }}</td>
+        <td>
+          {{ servicio.vehiculo.marca }} {{ servicio.vehiculo.modelo }} - {{
+          servicio.vehiculo.anio }}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3">No hay servicios registrados.</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <a href="{% url 'registrar_servicio' %}">Registrar nuevo servicio</a>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Registrar Cotización</title>
+  </head>
+  <body>
+    <h2>Registrar Cotización</h2>
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }}
+
+      <h3>Productos Cotizados</h3>
+      {{ formset.management_form }} {% for form in formset %} {{ form.as_p }}
+      {%endfor %}
+
+      <button type="submit">Guardar Cotización</button>
+    </form>
+    <a href="{% url 'listar_cotizaciones' %}">Regresar al listado</a>
+  </body>
+</html>
