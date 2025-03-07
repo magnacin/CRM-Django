@@ -1,24 +1,66 @@
 from django import forms
-from .models import Cliente, Vehiculo, Servicio, DetalleServicio, CatalogoServicio
+from django.core.exceptions import ValidationError
+from .models import (
+    Cliente, Vehiculo, Servicio, DetalleServicio, 
+    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio
+)
 
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
         fields = ['nombre', 'apellido', 'telefono', 'email', 'estado']
 
+    def clean(self):
+        cleaned_data = super().clean()
+        nombre = cleaned_data.get('nombre', '').upper()
+        apellido = cleaned_data.get('apellido', '').upper()
+
+        if Cliente.objects.filter(nombre=nombre, apellido=apellido).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ya existe un cliente con el mismo nombre y apellido.')
+
+        cleaned_data['nombre'] = nombre
+        cleaned_data['apellido'] = apellido
+
+        return cleaned_data
+
     def clean_telefono(self):
-        telefono = self.cleaned_data['telefono']
-        import re
-        if not re.match(r'^\d{3}-\d{3}-\d{4}$', telefono):
-            raise forms.ValidationError("El teléfono debe tener el formato 123-456-7890")
+        telefono = self.cleaned_data.get('telefono', '')
+
+        if telefono and not self.validar_formato_telefono(telefono):
+            raise ValidationError('El formato de teléfono debe ser 123-456-7890.')
+
         return telefono
-# Añadimos la forma para capturar vehiculos:
+
+    @staticmethod
+    def validar_formato_telefono(telefono):
+        import re
+        return re.match(r'^\d{3}-\d{3}-\d{4}$', telefono) is not None
+
 class VehiculoForm(forms.ModelForm):
     class Meta:
         model = Vehiculo
         fields = ['cliente', 'marca', 'modelo', 'anio', 'vin', 'tipo_motor']
 
-# Servicios
+    def clean(self):
+        cleaned_data = super().clean()
+        marca = cleaned_data.get('marca', '').upper()
+        modelo = cleaned_data.get('modelo', '').upper()
+        anio = cleaned_data.get('anio')
+        vin = cleaned_data.get('vin', '').upper()
+
+        if vin:
+            if Vehiculo.objects.filter(vin=vin).exclude(pk=self.instance.pk).exists():
+                raise ValidationError('Ya existe un vehículo con ese VIN.')
+        else:
+            if Vehiculo.objects.filter(marca=marca, modelo=modelo, anio=anio).exclude(pk=self.instance.pk).exists():
+                raise ValidationError('Ya existe un vehículo con la misma marca, modelo y año.')
+
+        cleaned_data['marca'] = marca
+        cleaned_data['modelo'] = modelo
+        cleaned_data['vin'] = vin
+
+        return cleaned_data
+
 class ServicioForm(forms.ModelForm):
     class Meta:
         model = Servicio
@@ -33,16 +75,6 @@ class DetalleServicioForm(forms.ModelForm):
     class Meta:
         model = DetalleServicio
         fields = ['tipo_servicio', 'precio_final']
-
-from .models import CatalogoServicio
-
-class CatalogoServicioForm(forms.ModelForm):
-    class Meta:
-        model = CatalogoServicio
-        fields = ['nombre_servicio', 'precio_base']
-
-# Cotizaciones:
-from .models import Cotizacion, DetalleCotizacion, Producto
 
 class CotizacionForm(forms.ModelForm):
     class Meta:
@@ -59,11 +91,28 @@ class DetalleCotizacionForm(forms.ModelForm):
         model = DetalleCotizacion
         fields = ['producto', 'cantidad', 'precio_unitario', 'precio_total']
 
-# Productos:
-from .models import Producto
-
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['descripcion', 'cantidad', 'precio_unitario']
+        fields = ['descripcion', 'precio_unitario', 'cantidad']
 
+    def clean_descripcion(self):
+        descripcion = self.cleaned_data.get('descripcion').upper()
+
+        if Producto.objects.filter(descripcion=descripcion).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ya existe un producto con esta descripción.')
+
+        return descripcion
+
+class CatalogoServicioForm(forms.ModelForm):
+    class Meta:
+        model = CatalogoServicio
+        fields = ['nombre_servicio', 'precio_base']
+
+    def clean_nombre_servicio(self):
+        nombre = self.cleaned_data.get('nombre_servicio').upper()
+
+        if CatalogoServicio.objects.filter(nombre_servicio=nombre).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ya existe un servicio con este nombre.')
+
+        return nombre

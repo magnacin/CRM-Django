@@ -33,7 +33,7 @@ class Vehiculo(models.Model):
     marca = models.CharField(max_length=50)
     modelo = models.CharField(max_length=50)
     anio = models.IntegerField()
-    vin = models.CharField(max_length=17, unique=True)
+    vin = vin = models.CharField(max_length=17, unique=True, blank=True, null=True)
     tipo_motor = models.CharField(max_length=10, choices=TIPO_MOTOR_CHOICES)
 
     def save(self, *args, **kwargs):
