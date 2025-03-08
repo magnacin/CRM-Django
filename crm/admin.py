@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Cliente, Vehiculo, CatalogoServicio, Servicio, DetalleServicio,
-    Venta, Producto, ModuloBolsaAire, Cotizacion, DetalleCotizacion
+    Venta, Producto, ModuloBolsaAire
 )
 
 @admin.register(Cliente)
@@ -47,13 +47,3 @@ class ModuloBolsaAireAdmin(admin.ModelAdmin):
     list_display = ('cliente', 'fecha_reparacion', 'marca', 'modelo', 'numero_parte', 'tipo_microprocesador', 'precio_reparacion')
     search_fields = ('marca', 'modelo', 'numero_parte', 'tipo_microprocesador')
     date_hierarchy = 'fecha_reparacion'
-
-@admin.register(Cotizacion)
-class CotizacionAdmin(admin.ModelAdmin):
-    list_display = ('numero_cotizacion', 'fecha', 'cliente', 'vehiculo', 'total_general')
-    search_fields = ('numero_cotizacion', 'cliente__nombre', 'vehiculo__marca')
-    date_hierarchy = 'fecha'
-
-@admin.register(DetalleCotizacion)
-class DetalleCotizacionAdmin(admin.ModelAdmin):
-    list_display = ('cotizacion', 'producto', 'cantidad', 'precio_unitario', 'precio_total')

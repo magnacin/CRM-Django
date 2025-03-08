@@ -136,8 +136,12 @@ def registrar_cotizacion(request):
 
 def eliminar_cotizacion(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
-    cotizacion.delete()
-    return redirect('listar_cotizaciones')
+    if request.method == "POST":
+        cotizacion.delete()
+        return redirect('listar_cotizaciones')
+    return render(request, 'crm/confirmar_eliminar.html', {'obj': cotizacion})
+
+
 
 # --- PRODUCTOS ---
 def listar_productos(request):

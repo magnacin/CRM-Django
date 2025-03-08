@@ -55,36 +55,17 @@
 
         <div class="form-group">
           <label>Cantidad:</label>
-          <input
-            type="number"
-            name="{{ form.cantidad.name }}"
-            class="form-control cantidad-input"
-            min="1"
-            value="{{ form.cantidad.value|default_if_none:'1' }}"
-            required
-          />
+          {{ form.cantidad }}
         </div>
 
         <div class="form-group">
           <label>Precio Unitario:</label>
-          <input
-            type="text"
-            name="{{ form.precio_unitario.name }}"
-            class="form-control precio-unitario-input"
-            value="{{ form.precio_unitario.value|default_if_none:'' }}"
-            readonly
-          />
+          {{ form.precio_unitario }}
         </div>
 
         <div class="form-group">
           <label>Precio Total:</label>
-          <input
-            type="text"
-            name="{{ form.precio_total.name }}"
-            class="form-control precio-total-input"
-            value="{{ form.precio_total.value|default_if_none:'' }}"
-            readonly
-          />
+          {{ form.precio_total }}
         </div>
       </div>
       {% endfor %}
@@ -101,15 +82,6 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Si la fecha está vacía, asignar la fecha actual automáticamente
-    var fechaInput = document.getElementById("id_fecha");
-    if (!fechaInput.value) {
-      var today = new Date();
-      var formattedDate = today.toISOString().split("T")[0];
-      fechaInput.value = formattedDate;
-    }
-
-    // Obtener el precio unitario al seleccionar un producto y calcular el total
     document.querySelectorAll(".detalle-item").forEach(function (item) {
       let selectProducto = item.querySelector("select[name$='producto']");
       let inputPrecio = item.querySelector(".precio-unitario-input");
@@ -122,18 +94,18 @@
           fetch(`/crm/productos/${productoId}/precio/`)
             .then((response) => response.json())
             .then((data) => {
-              inputPrecio.value = data.precio;
+              inputPrecio.value = data.precio || "0.00";
+              inputCantidad.value = inputCantidad.value || 1; // Asegurar que cantidad tenga un valor
               calcularTotal();
             })
             .catch((error) => console.error("Error al obtener precio:", error));
         }
       });
 
-      // Calcular el precio total cuando cambia la cantidad
       inputCantidad.addEventListener("input", calcularTotal);
 
       function calcularTotal() {
-        let cantidad = parseFloat(inputCantidad.value) || 0;
+        let cantidad = parseFloat(inputCantidad.value) || 1;
         let precioUnitario = parseFloat(inputPrecio.value) || 0;
         inputTotal.value = (cantidad * precioUnitario).toFixed(2);
       }

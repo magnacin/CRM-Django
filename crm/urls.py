@@ -36,6 +36,8 @@ urlpatterns = [
     path('cotizaciones/', listar_cotizaciones, name='listar_cotizaciones'),
     path('cotizaciones/nuevo/', registrar_cotizacion, name='registrar_cotizacion'),
     path('cotizaciones/eliminar/<int:pk>/', eliminar_cotizacion, name='eliminar_cotizacion'),
+
+    # Productos
     path('productos/', views.listar_productos, name='listar_productos'),
     path('productos/nuevo/', views.registrar_producto, name='registrar_producto'),
     path('productos/editar/<int:pk>/', views.editar_producto, name='editar_producto'),
