@@ -1,8 +1,11 @@
 from django import forms
+from django.db import models
+import re   
 from django.core.exceptions import ValidationError
+from datetime import date, datetime
 from .models import (
     Cliente, Vehiculo, Servicio, DetalleServicio, 
-    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio
+    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio, ModuloBolsaAire
 )
 
 class ClienteForm(forms.ModelForm):
@@ -10,31 +13,25 @@ class ClienteForm(forms.ModelForm):
         model = Cliente
         fields = ['nombre', 'apellido', 'telefono', 'email', 'estado']
 
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        # Eliminar cualquier carácter que no sea dígito
+        telefono = re.sub(r'\D', '', telefono)
+
+        if len(telefono) != 10:
+            raise ValidationError('El número de teléfono debe contener exactamente 10 dígitos.')
+
+        # Formatear a XXX-XXX-XXXX
+        telefono_formateado = f'{telefono[:3]}-{telefono[3:6]}-{telefono[6:]}'
+
+        return telefono_formateado
+
     def clean(self):
         cleaned_data = super().clean()
-        nombre = cleaned_data.get('nombre', '').upper()
-        apellido = cleaned_data.get('apellido', '').upper()
-
-        if Cliente.objects.filter(nombre=nombre, apellido=apellido).exclude(pk=self.instance.pk).exists():
-            raise ValidationError('Ya existe un cliente con el mismo nombre y apellido.')
-
-        cleaned_data['nombre'] = nombre
-        cleaned_data['apellido'] = apellido
-
+        cleaned_data['nombre'] = cleaned_data.get('nombre', '').upper()
+        cleaned_data['apellido'] = cleaned_data.get('apellido', '').upper()
+        cleaned_data['email'] = cleaned_data.get('email', '').upper()
         return cleaned_data
-
-    def clean_telefono(self):
-        telefono = self.cleaned_data.get('telefono', '')
-
-        if telefono and not self.validar_formato_telefono(telefono):
-            raise ValidationError('El formato de teléfono debe ser 123-456-7890.')
-
-        return telefono
-
-    @staticmethod
-    def validar_formato_telefono(telefono):
-        import re
-        return re.match(r'^\d{3}-\d{3}-\d{4}$', telefono) is not None
 
 class VehiculoForm(forms.ModelForm):
     class Meta:
@@ -60,11 +57,21 @@ class VehiculoForm(forms.ModelForm):
         cleaned_data['vin'] = vin
 
         return cleaned_data
+from datetime import date
+
+from django import forms
+from .models import Cliente, Vehiculo, Servicio, DetalleServicio, CatalogoServicio
 
 class ServicioForm(forms.ModelForm):
     class Meta:
         model = Servicio
-        fields = ['cliente', 'vehiculo', 'fecha_servicio']
+        fields = ['cliente', 'vehiculo']  # Ya no incluimos fecha_servicio
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['vehiculo'].required = False  # Vehículo opcional
+
+
 
 class DetalleServicioForm(forms.ModelForm):
     tipo_servicio = forms.ModelChoiceField(
@@ -75,21 +82,35 @@ class DetalleServicioForm(forms.ModelForm):
     class Meta:
         model = DetalleServicio
         fields = ['tipo_servicio', 'precio_final']
+from django import forms
+from .models import Cotizacion
 
 class CotizacionForm(forms.ModelForm):
     class Meta:
         model = Cotizacion
-        fields = ['cliente', 'vehiculo', 'fecha']
+        fields = ['fecha', 'numero_cotizacion', 'cliente', 'vehiculo']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # ✅ Asignar automáticamente la fecha actual si no se proporciona
+        if not self.instance.pk:
+            self.fields['fecha'].initial = datetime.today().strftime('%Y-%m-%d')
+
+        # ✅ Generar el próximo número de cotización
+        if not self.instance.pk:
+            max_num = Cotizacion.objects.all().aggregate(models.Max('numero_cotizacion'))['numero_cotizacion__max']
+            self.fields['numero_cotizacion'].initial = (max_num + 1) if max_num else 1
+
 
 class DetalleCotizacionForm(forms.ModelForm):
-    producto = forms.ModelChoiceField(
-        queryset=Producto.objects.all(),
-        empty_label="-- Selecciona un producto --"
-    )
-
     class Meta:
         model = DetalleCotizacion
-        fields = ['producto', 'cantidad', 'precio_unitario', 'precio_total']
+        fields = ['producto', 'cantidad', 'precio_unitario']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        #self.fields['precio_unitario'].widget.attrs.update({'readonly': 'false'})  # Sigue bloqueado, pero ahora lo rellenaremos automáticamente
 
 class ProductoForm(forms.ModelForm):
     class Meta:
@@ -103,6 +124,11 @@ class ProductoForm(forms.ModelForm):
             raise ValidationError('Ya existe un producto con esta descripción.')
 
         return descripcion
+    def clean_precio_unitario(self):
+        precio = self.cleaned_data.get('precio_unitario')
+        if precio is None or precio <= 0:
+            raise forms.ValidationError("El precio debe ser mayor a 0.")
+        return precio
 
 class CatalogoServicioForm(forms.ModelForm):
     class Meta:
@@ -116,3 +142,26 @@ class CatalogoServicioForm(forms.ModelForm):
             raise ValidationError('Ya existe un servicio con este nombre.')
 
         return nombre
+    
+# Modulos de bolsas de aire:
+class ModuloBolsaAireForm(forms.ModelForm):
+    class Meta:
+        model = ModuloBolsaAire
+        fields = ['marca', 'modelo', 'anio', 'numero_parte', 'tipo_microprocesador', 'precio_reparacion']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk and 'initial' not in kwargs:
+            self.initial['fecha_reparacion'] = date.today().strftime('%d-%m-%Y')
+
+    def clean_numero_parte(self):
+        numero_parte = self.cleaned_data.get('numero_parte').upper()
+        if ModuloBolsaAire.objects.filter(numero_parte=numero_parte).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ya existe un módulo con este número de parte.')
+        return numero_parte
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data['marca'] = cleaned_data.get('marca', '').upper()
+        cleaned_data['modelo'] = cleaned_data.get('modelo', '').upper()
+        cleaned_data['numero_parte'] = cleaned_data.get('numero_parte', '').upper()
+        return cleaned_data

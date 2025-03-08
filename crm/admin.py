@@ -39,7 +39,8 @@ class VentaAdmin(admin.ModelAdmin):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('descripcion', 'cantidad', 'precio_unitario')
+    list_display = ('descripcion', 'cantidad', 'precio_unitario')  # Incluir precio_unitario
+    search_fields = ('descripcion',)
 
 @admin.register(ModuloBolsaAire)
 class ModuloBolsaAireAdmin(admin.ModelAdmin):
@@ -49,10 +50,10 @@ class ModuloBolsaAireAdmin(admin.ModelAdmin):
 
 @admin.register(Cotizacion)
 class CotizacionAdmin(admin.ModelAdmin):
-    list_display = ('numero_cotizacion', 'fecha', 'cliente', 'vehiculo', 'total')
+    list_display = ('numero_cotizacion', 'fecha', 'cliente', 'vehiculo', 'total_general')
     search_fields = ('numero_cotizacion', 'cliente__nombre', 'vehiculo__marca')
     date_hierarchy = 'fecha'
 
 @admin.register(DetalleCotizacion)
 class DetalleCotizacionAdmin(admin.ModelAdmin):
-    list_display = ('cotizacion', 'descripcion', 'cantidad', 'precio_unitario', 'precio_total')
+    list_display = ('cotizacion', 'producto', 'cantidad', 'precio_unitario', 'precio_total')

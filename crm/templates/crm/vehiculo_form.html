@@ -5,10 +5,12 @@
   </head>
   <body>
     <h2>Registrar Vehículo</h2>
+
     <form method="post">
       {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Guardar</button>
+      <button type="submit">Guardar Vehículo</button>
     </form>
-    <a href="{% url 'listar_vehiculos' %}">Regresar al listado de vehículos</a>
+
+    <a href="{% url 'listar_vehiculos' %}">Cancelar y regresar</a>
   </body>
 </html>

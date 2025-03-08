@@ -2,12 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
 from .models import (
-    Cliente, Vehiculo, Servicio, DetalleServicio, 
-    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio
+    Cliente, Vehiculo, Servicio, DetalleServicio,
+    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio, ModuloBolsaAire
 )
 from .forms import (
     ClienteForm, VehiculoForm, ServicioForm, DetalleServicioForm,
-    CotizacionForm, DetalleCotizacionForm, ProductoForm, CatalogoServicioForm
+    CotizacionForm, DetalleCotizacionForm, ProductoForm, CatalogoServicioForm, ModuloBolsaAireForm
 )
 
 # --- CLIENTES ---
@@ -41,10 +41,14 @@ def eliminar_cliente(request, pk):
     if request.method == 'POST':
         cliente.delete()
         return redirect('listar_clientes')
-    return render(request, 'crm/confirmar_eliminar.html', {'obj': cliente})
+    return render(request, 'crm/confirmar_eliminar.html', {'objeto': cliente})
 
 
-# --- VEHICULOS ---
+
+# --- VEHICULOS ---from django.shortcuts import render, redirect, get_object_or_404
+from .models import Vehiculo
+from .forms import VehiculoForm
+
 def listar_vehiculos(request):
     vehiculos = Vehiculo.objects.select_related('cliente').all()
     return render(request, 'crm/listar_vehiculos.html', {'vehiculos': vehiculos})
@@ -75,54 +79,36 @@ def eliminar_vehiculo(request, pk):
     if request.method == 'POST':
         vehiculo.delete()
         return redirect('listar_vehiculos')
-    return render(request, 'crm/confirmar_eliminar.html', {'obj': vehiculo})
+    return render(request, 'crm/confirmar_eliminar.html', {'objeto': vehiculo})
 
 
-# --- SERVICIOS ---
-def listar_servicios(request):
-    servicios = Servicio.objects.select_related('cliente', 'vehiculo').all()
-    return render(request, 'crm/listar_servicios.html', {'servicios': servicios})
-
-def registrar_servicio(request):
-    DetalleServicioFormSet = inlineformset_factory(
-        Servicio,
-        DetalleServicio,
-        form=DetalleServicioForm,
-        extra=1,
-        can_delete=False
-    )
+def registrar_modulo_desde_servicio(request, servicio_id):
+    servicio = get_object_or_404(Servicio, pk=servicio_id)
 
     if request.method == 'POST':
-        form = ServicioForm(request.POST)
-        formset = DetalleServicioFormSet(request.POST)
-
-        if form.is_valid() and formset.is_valid():
-            servicio = form.save()
-            detalles = formset.save(commit=False)
-            for detalle in detalles:
-                detalle.servicio = servicio
-                detalle.save()
+        form = ModuloBolsaAireForm(request.POST)
+        if form.is_valid():
+            modulo = form.save(commit=False)
+            modulo.cliente = servicio.cliente
+            modulo.fecha_reparacion = servicio.fecha_servicio
+            modulo.save()
             return redirect('listar_servicios')
     else:
-        form = ServicioForm()
-        formset = DetalleServicioFormSet()
+        form = ModuloBolsaAireForm(initial={
+            'cliente': servicio.cliente,
+            'fecha_reparacion': servicio.fecha_servicio
+        })
 
-    return render(request, 'crm/servicio_form.html', {'form': form, 'formset': formset})
+    return render(request, 'crm/modulo_form.html', {'form': form})
 
 
 # --- COTIZACIONES ---
 def listar_cotizaciones(request):
-    cotizaciones = Cotizacion.objects.select_related('cliente', 'vehiculo').all()
+    cotizaciones = Cotizacion.objects.all()
     return render(request, 'crm/listar_cotizaciones.html', {'cotizaciones': cotizaciones})
 
 def registrar_cotizacion(request):
-    DetalleCotizacionFormSet = inlineformset_factory(
-        Cotizacion,
-        DetalleCotizacion,
-        form=DetalleCotizacionForm,
-        extra=1,
-        can_delete=False
-    )
+    DetalleCotizacionFormSet = inlineformset_factory(Cotizacion, DetalleCotizacion, form=DetalleCotizacionForm, extra=1, can_delete=True)
 
     if request.method == 'POST':
         form = CotizacionForm(request.POST)
@@ -131,21 +117,27 @@ def registrar_cotizacion(request):
         if form.is_valid() and formset.is_valid():
             cotizacion = form.save()
             detalles = formset.save(commit=False)
+
             for detalle in detalles:
                 detalle.cotizacion = cotizacion
                 detalle.precio_total = detalle.cantidad * detalle.precio_unitario
                 detalle.save()
 
-            cotizacion.total_general = sum(d.precio_total for d in cotizacion.detallecotizacion_set.all())
-            cotizacion.save()
+            cotizacion.calcular_total()  # ✅ Se guarda el total
+            return redirect('listar_cotizaciones')  # ✅ Ahora redirige correctamente
 
-            return redirect('listar_cotizaciones')
     else:
         form = CotizacionForm()
         formset = DetalleCotizacionFormSet()
 
     return render(request, 'crm/cotizacion_form.html', {'form': form, 'formset': formset})
 
+
+
+def eliminar_cotizacion(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    cotizacion.delete()
+    return redirect('listar_cotizaciones')
 
 # --- PRODUCTOS ---
 def listar_productos(request):
@@ -180,6 +172,63 @@ def eliminar_producto(request, pk):
         return redirect('listar_productos')
     return render(request, 'crm/confirmar_eliminar.html', {'obj': producto})
 
+# --- SERVICIOS ---
+def listar_servicios(request):
+    servicios = Servicio.objects.all()
+
+    for servicio in servicios:
+        servicio.total_precio = sum(detalle.precio_final for detalle in servicio.detalleservicio_set.all())
+
+    return render(request, 'crm/listar_servicios.html', {'servicios': servicios})
+
+
+def registrar_servicio(request):
+    DetalleServicioFormSet = inlineformset_factory(Servicio, DetalleServicio, form=DetalleServicioForm, extra=1)
+
+    if request.method == 'POST':
+        form = ServicioForm(request.POST)
+        formset = DetalleServicioFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            servicio = form.save()
+            detalles = formset.save(commit=False)
+            for detalle in detalles:
+                detalle.servicio = servicio
+                detalle.save()
+            return redirect('listar_servicios')
+    else:
+        form = ServicioForm()
+        formset = DetalleServicioFormSet()
+
+    return render(request, 'crm/servicio_form.html', {'form': form, 'formset': formset})
+
+def editar_servicio(request, pk):
+    servicio = get_object_or_404(Servicio, pk=pk)
+    DetalleServicioFormSet = inlineformset_factory(Servicio, DetalleServicio, form=DetalleServicioForm, extra=0)
+
+    if request.method == 'POST':
+        form = ServicioForm(request.POST, instance=servicio)
+        formset = DetalleServicioFormSet(request.POST, instance=servicio)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return redirect('listar_servicios')
+    else:
+        form = ServicioForm(instance=servicio)
+        formset = DetalleServicioFormSet(instance=servicio)
+
+    return render(request, 'crm/servicio_form.html', {'form': form, 'formset': formset})
+
+
+def eliminar_servicio(request, pk):
+    servicio = get_object_or_404(Servicio, pk=pk)
+    if request.method == 'POST':
+        servicio.delete()
+        return redirect('listar_servicios')
+    return render(request, 'crm/confirmar_eliminar.html', {'objeto': servicio})
+
+
 
 # --- CATALOGO DE SERVICIOS ---
 def listar_servicios_catalogo(request):
@@ -209,7 +258,16 @@ def editar_servicio_catalogo(request, pk):
 
 def eliminar_servicio_catalogo(request, pk):
     servicio = get_object_or_404(CatalogoServicio, pk=pk)
-    if request.method == 'POST':
-        servicio.delete()
-        return redirect('listar_servicios_catalogo')
-    return render(request, 'crm/confirmar_eliminar.html', {'obj': servicio})
+    servicio.delete()
+    return redirect('listar_servicios_catalogo')
+
+
+from django.http import JsonResponse
+from .models import Producto
+
+def obtener_precio_producto(request, producto_id):
+    try:
+        producto = Producto.objects.get(id=producto_id)
+        return JsonResponse({'precio': producto.precio_unitario})
+    except Producto.DoesNotExist:
+        return JsonResponse({'error': 'Producto no encontrado'}, status=404)

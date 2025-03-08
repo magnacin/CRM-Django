@@ -1,18 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
       {% if form.instance.pk %}Editar{% else %}Registrar{% endif %} Producto
     </title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        padding: 20px;
+      }
+      .container {
+        max-width: 500px;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+      label {
+        font-weight: bold;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        background-color: #28a745;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #218838;
+      }
+      .btn-secondary {
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+        color: #007bff;
+        text-decoration: none;
+      }
+      .btn-secondary:hover {
+        text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
-    <h2>
-      {% if form.instance.pk %}Editar{% else %}Registrar{% endif %} Producto
-    </h2>
-    <form method="post">
-      {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Guardar</button>
-    </form>
-    <a href="{% url 'listar_productos' %}">Regresar al listado</a>
+    <div class="container">
+      <h2>
+        {% if form.instance.pk %}Editar{% else %}Registrar{% endif %} Producto
+      </h2>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <label for="id_descripcion">Descripción:</label>
+        {{ form.descripcion }}
+
+        <label for="id_cantidad">Cantidad:</label>
+        {{ form.cantidad }}
+
+        <label for="id_precio_unitario">Precio Unitario:</label>
+        {{ form.precio_unitario }}
+
+        <button type="submit">Guardar</button>
+      </form>
+
+      <a href="{% url 'listar_productos' %}" class="btn-secondary"
+        >Regresar al listado</a
+      >
+    </div>
   </body>
 </html>

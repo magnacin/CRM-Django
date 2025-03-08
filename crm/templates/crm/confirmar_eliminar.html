@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Confirmar Eliminación</title>
+  </head>
+  <body>
+    <h2>¿Estás seguro de que deseas eliminar?</h2>
+    <p><strong>{{ objeto }}</strong></p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Sí, eliminar</button>
+    </form>
+    <a href="javascript:history.back()">Cancelar</a>
+  </body>
+</html>

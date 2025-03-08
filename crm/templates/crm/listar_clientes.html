@@ -2,31 +2,104 @@
 <html lang="es">
   <head>
     <title>Listado de Clientes</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: center;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      h2 {
+        text-align: center;
+      }
+      a {
+        text-decoration: none;
+        color: #007bff;
+        margin: 0 5px;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .btn {
+        display: inline-block;
+        padding: 5px 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .btn-danger {
+        background-color: #dc3545;
+      }
+      .btn-primary {
+        background-color: #007bff;
+      }
+    </style>
   </head>
   <body>
-    <h2>Clientes Registrados</h2>
-    <table border="1">
-      <tr>
-        <th>Nombre</th>
-        <th>Apellido</th>
-        <th>Teléfono</th>
-        <th>Email</th>
-        <th>Estado</th>
-      </tr>
-      {% for cliente in clientes %}
-      <tr>
-        <td>{{ cliente.nombre }}</td>
-        <td>{{ cliente.apellido }}</td>
-        <td>{{ cliente.telefono }}</td>
-        <td>{{ cliente.email }}</td>
-        <td>{{ cliente.estado|yesno:"Activo,Inactivo" }}</td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="5">No hay clientes registrados.</td>
-      </tr>
-      {% endfor %}
+    <h2>Listado de Clientes</h2>
+
+    <a href="{% url 'registrar_cliente' %}" class="btn btn-primary"
+      >Agregar Cliente</a
+    >
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Teléfono</th>
+          <th>Email</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cliente in clientes %}
+        <tr>
+          <td>{{ cliente.nombre }}</td>
+          <td>{{ cliente.apellido }}</td>
+          <td>{{ cliente.telefono }}</td>
+          <td>{{ cliente.email }}</td>
+          <td>
+            <a
+              href="{% url 'editar_cliente' cliente.id %}"
+              class="btn btn-primary"
+              >Editar</a
+            >
+            <a
+              href="{% url 'eliminar_cliente' cliente.id %}"
+              class="btn btn-danger"
+              onclick="return confirm('¿Estás seguro de eliminar a {{ cliente.nombre }} {{ cliente.apellido }}?')"
+              >Eliminar</a
+            >
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">No hay clientes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    <a href="{% url 'registrar_cliente' %}">Registrar nuevo cliente</a>
+
+    <a href="{% url 'listar_servicios' %}">Volver al menú principal</a>
   </body>
 </html>

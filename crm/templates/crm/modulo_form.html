@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Registrar Módulo Bolsa de Aire</title>
+  </head>
+  <body>
+    <h2>Registrar Módulo Bolsa de Aire</h2>
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }}
+      <button type="submit">Guardar Módulo</button>
+    </form>
+    <a href="{% url 'listar_servicios' %}">Cancelar y regresar</a>
+  </body>
+</html>

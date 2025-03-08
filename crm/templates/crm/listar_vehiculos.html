@@ -2,33 +2,80 @@
 <html lang="es">
   <head>
     <title>Listado de Vehículos</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .btn {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 3px;
+      }
+      .btn-danger {
+        background-color: #dc3545;
+      }
+    </style>
   </head>
   <body>
-    <h2>Vehículos Registrados</h2>
-    <table border="1">
-      <tr>
-        <th>Cliente</th>
-        <th>Marca</th>
-        <th>Modelo</th>
-        <th>Año</th>
-        <th>VIN</th>
-        <th>Tipo de Motor</th>
-      </tr>
-      {% for vehiculo in vehiculos %}
-      <tr>
-        <td>{{ vehiculo.cliente.nombre }} {{ vehiculo.cliente.apellido }}</td>
-        <td>{{ vehiculo.marca }}</td>
-        <td>{{ vehiculo.modelo }}</td>
-        <td>{{ vehiculo.anio }}</td>
-        <td>{{ vehiculo.vin }}</td>
-        <td>{{ vehiculo.get_tipo_motor_display }}</td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="6">No hay vehículos registrados.</td>
-      </tr>
-      {% endfor %}
+    <h2>Listado de Vehículos</h2>
+
+    <a href="{% url 'registrar_vehiculo' %}" class="btn">Agregar Vehículo</a>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Año</th>
+          <th>VIN</th>
+          <th>Motor</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for vehiculo in vehiculos %}
+        <tr>
+          <td>{{ vehiculo.cliente.nombre }} {{ vehiculo.cliente.apellido }}</td>
+          <td>{{ vehiculo.marca }}</td>
+          <td>{{ vehiculo.modelo }}</td>
+          <td>{{ vehiculo.anio }}</td>
+          <td>{{ vehiculo.vin }}</td>
+          <td>{{ vehiculo.tipo_motor }}</td>
+          <td>
+            <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn"
+              >Editar</a
+            >
+            <a
+              href="{% url 'eliminar_vehiculo' vehiculo.id %}"
+              class="btn btn-danger"
+              onclick="return confirm('¿Seguro que deseas eliminar este vehículo?')"
+              >Eliminar</a
+            >
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">No hay vehículos registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    <a href="{% url 'registrar_vehiculo' %}">Registrar nuevo vehículo</a>
+
+    <a href="{% url 'listar_servicios' %}">Volver al menú principal</a>
   </body>
 </html>

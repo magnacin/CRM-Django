@@ -2,13 +2,90 @@
 <html lang="es">
   <head>
     <title>Registrar Cliente</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      form {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        max-width: 600px;
+      }
+      h2 {
+        color: #333;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      a {
+        display: inline-block;
+        margin-top: 10px;
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+    <script>
+      function formatearTelefono(input) {
+        let numero = input.value.replace(/\D/g, ""); // Solo números
+        if (numero.length > 10) {
+          numero = numero.slice(0, 10); // Máximo 10 dígitos
+        }
+        let formateado = numero.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+        input.value = formateado;
+      }
+    </script>
   </head>
   <body>
     <h2>Registrar Cliente</h2>
+
     <form method="post">
-      {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Guardar</button>
+      {% csrf_token %}
+      <p>
+        <label for="id_nombre">Nombre:</label>
+        {{ form.nombre }}
+      </p>
+      <p>
+        <label for="id_apellido">Apellido:</label>
+        {{ form.apellido }}
+      </p>
+      <p>
+        <label for="id_telefono">Teléfono:</label>
+        <input
+          type="text"
+          name="telefono"
+          id="id_telefono"
+          maxlength="12"
+          oninput="formatearTelefono(this)"
+          value="{{ form.telefono.value|default:'' }}"
+        />
+      </p>
+      <p>
+        <label for="id_email">Email:</label>
+        {{ form.email }}
+      </p>
+      <p>
+        <label for="id_estado">Estado:</label>
+        {{ form.estado }}
+      </p>
+
+      <button type="submit">Guardar Cliente</button>
     </form>
-    <a href="{% url 'listar_clientes' %}">Regresar</a>
+
+    <a href="{% url 'listar_clientes' %}">Cancelar y regresar</a>
   </body>
 </html>

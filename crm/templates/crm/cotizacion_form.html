@@ -1,19 +1,144 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <title>Registrar Cotización</title>
-  </head>
-  <body>
-    <h2>Registrar Cotización</h2>
-    <form method="post">
-      {% csrf_token %} {{ form.as_p }}
+{% extends "crm/base.html" %} {% block content %}
+<div class="container mt-4">
+  <h2>Registrar Cotización</h2>
 
-      <h3>Productos Cotizados</h3>
-      {{ formset.management_form }} {% for form in formset %} {{ form.as_p }}
-      {%endfor %}
+  <form method="post" id="cotizacionForm">
+    {% csrf_token %}
 
-      <button type="submit">Guardar Cotización</button>
-    </form>
-    <a href="{% url 'listar_cotizaciones' %}">Regresar al listado</a>
-  </body>
-</html>
+    <div class="form-group">
+      <label for="id_numero_cotizacion"
+        ><strong>Número de Cotización:</strong></label
+      >
+      <input
+        type="text"
+        class="form-control"
+        name="numero_cotizacion"
+        id="id_numero_cotizacion"
+        value="{{ form.numero_cotizacion.value|default_if_none:'' }}"
+        readonly
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="id_fecha"><strong>Fecha:</strong></label>
+      <input
+        type="date"
+        class="form-control"
+        name="fecha"
+        id="id_fecha"
+        value="{{ form.fecha.value|default_if_none:'' }}"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="id_cliente"><strong>Cliente:</strong></label>
+      {{ form.cliente }}
+    </div>
+
+    <div class="form-group">
+      <label for="id_vehiculo"><strong>Vehículo (Opcional):</strong></label>
+      {{ form.vehiculo }}
+    </div>
+
+    <hr />
+
+    <h4>Detalles de la Cotización</h4>
+
+    <div id="detalle_cotizacion">
+      {{ formset.management_form }} {% for form in formset %}
+      <div class="detalle-item">
+        <div class="form-group">
+          <label>Producto:</label>
+          {{ form.producto }}
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad:</label>
+          <input
+            type="number"
+            name="{{ form.cantidad.name }}"
+            class="form-control cantidad-input"
+            min="1"
+            value="{{ form.cantidad.value|default_if_none:'1' }}"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Precio Unitario:</label>
+          <input
+            type="text"
+            name="{{ form.precio_unitario.name }}"
+            class="form-control precio-unitario-input"
+            value="{{ form.precio_unitario.value|default_if_none:'' }}"
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Precio Total:</label>
+          <input
+            type="text"
+            name="{{ form.precio_total.name }}"
+            class="form-control precio-total-input"
+            value="{{ form.precio_total.value|default_if_none:'' }}"
+            readonly
+          />
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">
+      Guardar Cotización
+    </button>
+    <a href="{% url 'listar_cotizaciones' %}" class="btn btn-secondary mt-3"
+      >Cancelar</a
+    >
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Si la fecha está vacía, asignar la fecha actual automáticamente
+    var fechaInput = document.getElementById("id_fecha");
+    if (!fechaInput.value) {
+      var today = new Date();
+      var formattedDate = today.toISOString().split("T")[0];
+      fechaInput.value = formattedDate;
+    }
+
+    // Obtener el precio unitario al seleccionar un producto y calcular el total
+    document.querySelectorAll(".detalle-item").forEach(function (item) {
+      let selectProducto = item.querySelector("select[name$='producto']");
+      let inputPrecio = item.querySelector(".precio-unitario-input");
+      let inputCantidad = item.querySelector(".cantidad-input");
+      let inputTotal = item.querySelector(".precio-total-input");
+
+      selectProducto.addEventListener("change", function () {
+        let productoId = this.value;
+        if (productoId) {
+          fetch(`/crm/productos/${productoId}/precio/`)
+            .then((response) => response.json())
+            .then((data) => {
+              inputPrecio.value = data.precio;
+              calcularTotal();
+            })
+            .catch((error) => console.error("Error al obtener precio:", error));
+        }
+      });
+
+      // Calcular el precio total cuando cambia la cantidad
+      inputCantidad.addEventListener("input", calcularTotal);
+
+      function calcularTotal() {
+        let cantidad = parseFloat(inputCantidad.value) || 0;
+        let precioUnitario = parseFloat(inputPrecio.value) || 0;
+        inputTotal.value = (cantidad * precioUnitario).toFixed(2);
+      }
+    });
+  });
+</script>
+
+{% endblock %}

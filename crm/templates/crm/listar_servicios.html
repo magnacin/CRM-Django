@@ -2,30 +2,88 @@
 <html lang="es">
   <head>
     <title>Listado de Servicios</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .btn {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 3px;
+      }
+      .btn-danger {
+        background-color: #dc3545;
+      }
+    </style>
   </head>
   <body>
-    <h2>Servicios Realizados</h2>
-    <table border="1">
-      <tr>
-        <th>Fecha</th>
-        <th>Cliente</th>
-        <th>Vehículo</th>
-      </tr>
-      {% for servicio in servicios %}
-      <tr>
-        <td>{{ servicio.fecha_servicio }}</td>
-        <td>{{ servicio.cliente.nombre }} {{ servicio.cliente.apellido }}</td>
-        <td>
-          {{ servicio.vehiculo.marca }} {{ servicio.vehiculo.modelo }} - {{
-          servicio.vehiculo.anio }}
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="3">No hay servicios registrados.</td>
-      </tr>
-      {% endfor %}
+    <h2>Listado de Servicios</h2>
+
+    <a href="{% url 'registrar_servicio' %}" class="btn">Agregar Servicio</a>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Vehículo</th>
+          <th>Tipo de Servicio</th>
+          <th>Precio Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for servicio in servicios %}
+        <tr>
+          <td>{{ servicio.fecha_servicio }}</td>
+          <td>{{ servicio.cliente.nombre }} {{ servicio.cliente.apellido }}</td>
+          <td>
+            {% if servicio.vehiculo %} {{ servicio.vehiculo.marca }} {{
+            servicio.vehiculo.modelo }} {{ servicio.vehiculo.anio }} {% else %}
+            Sin vehículo asociado {% endif %}
+          </td>
+          <td>
+            <ul>
+              {% for detalle in servicio.detalleservicio_set.all %}
+              <li>{{ detalle.tipo_servicio.nombre_servicio }}</li>
+              {% endfor %}
+            </ul>
+          </td>
+          <td>$ {{ servicio.total_precio|floatformat:2 }}</td>
+          <td>
+            <a href="{% url 'editar_servicio' servicio.id %}" class="btn"
+              >Editar</a
+            >
+            <a
+              href="{% url 'eliminar_servicio' servicio.id %}"
+              class="btn btn-danger"
+              onclick="return confirm('¿Seguro que deseas eliminar este servicio?')"
+              >Eliminar</a
+            >
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">No hay servicios registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    <a href="{% url 'registrar_servicio' %}">Registrar nuevo servicio</a>
+
+    <a href="{% url 'listar_clientes' %}">Volver al menú principal</a>
   </body>
 </html>
