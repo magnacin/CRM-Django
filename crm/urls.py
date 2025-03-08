@@ -6,8 +6,9 @@ from .views import (
     listar_servicios, registrar_servicio, editar_servicio, eliminar_servicio,
     listar_servicios_catalogo, registrar_servicio_catalogo, editar_servicio_catalogo, eliminar_servicio_catalogo,
     listar_productos, registrar_producto, editar_producto, eliminar_producto, listar_cotizaciones, registrar_cotizacion, eliminar_cotizacion,
-    obtener_precio_producto
+    obtener_precio_producto, editar_cotizacion
 )
+
 
 
 urlpatterns = [
@@ -25,7 +26,6 @@ urlpatterns = [
     path('servicios/nuevo/', views.registrar_servicio, name='registrar_servicio'),
     path('servicios/editar/<int:pk>/', editar_servicio, name='editar_servicio'),
     path('servicios/eliminar/<int:pk>/', eliminar_servicio, name='eliminar_servicio'),
-
     path('servicios/modulo/<int:servicio_id>/', views.registrar_modulo_desde_servicio, name='registrar_modulo_desde_servicio'),
     # Catálogo de Servicios
     path('catalogo-servicios/', views.listar_servicios_catalogo, name='listar_servicios_catalogo'),
@@ -36,6 +36,8 @@ urlpatterns = [
     path('cotizaciones/', listar_cotizaciones, name='listar_cotizaciones'),
     path('cotizaciones/nuevo/', registrar_cotizacion, name='registrar_cotizacion'),
     path('cotizaciones/eliminar/<int:pk>/', eliminar_cotizacion, name='eliminar_cotizacion'),
+    path('cotizaciones/editar/<int:pk>/', editar_cotizacion, name='editar_cotizacion'),
+
 
     # Productos
     path('productos/', views.listar_productos, name='listar_productos'),

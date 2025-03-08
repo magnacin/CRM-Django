@@ -1,42 +1,46 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <title>Listado de Cotizaciones</title>
-  </head>
-  <body>
-    <h2>Listado de Cotizaciones</h2>
+{% extends "crm/base.html" %} {% block content %}
+<div class="container mt-4">
+  <h2>Listado de Cotizaciones</h2>
 
-    <a href="{% url 'registrar_cotizacion' %}">Nueva Cotización</a>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Número de Cotización</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Vehículo</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cotizacion in cotizaciones %}
+      <tr>
+        <td>{{ cotizacion.numero_cotizacion }}</td>
+        <td>{{ cotizacion.fecha }}</td>
+        <td>{{ cotizacion.cliente }}</td>
+        <td>{{ cotizacion.vehiculo|default:"N/A" }}</td>
+        <td>${{ cotizacion.total_general|floatformat:2 }}</td>
+        <td>
+          <a
+            href="{% url 'editar_cotizacion' cotizacion.pk %}"
+            class="btn btn-warning btn-sm"
+            >Editar</a
+          >
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center">
+          No hay cotizaciones registradas.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Número</th>
-          <th>Cliente</th>
-          <th>Vehículo</th>
-          <th>Fecha</th>
-          <th>Total</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for cotizacion in cotizaciones %}
-        <tr>
-          <td>{{ cotizacion.numero_cotizacion }}</td>
-          <td>{{ cotizacion.cliente }}</td>
-          <td>{{ cotizacion.vehiculo|default:"Sin vehículo" }}</td>
-          <td>{{ cotizacion.fecha }}</td>
-          <td>$ {{ cotizacion.total_general }}</td>
-          <td>
-            <a
-              href="{% url 'eliminar_cotizacion' cotizacion.numero_cotizacion %}"
-              onclick="return confirm('¿Seguro que deseas eliminar esta cotización?')"
-              >Eliminar</a
-            >
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </body>
-</html>
+  <a href="{% url 'registrar_cotizacion' %}" class="btn btn-primary"
+    >Nueva Cotización</a
+  >
+</div>
+{% endblock %}
