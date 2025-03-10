@@ -5,7 +5,26 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        margin: 20px;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 1000px;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 1.5rem;
       }
       table {
         width: 100%;
@@ -24,17 +43,14 @@
       }
       th {
         background-color: #f2f2f2;
+        font-weight: bold;
+        color: #333;
       }
-      h2 {
-        text-align: center;
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
       }
-      a {
-        text-decoration: none;
-        color: #007bff;
-        margin: 0 5px;
-      }
-      a:hover {
-        text-decoration: underline;
+      tr:hover {
+        background-color: #f1f1f1;
       }
       .btn {
         display: inline-block;
@@ -45,6 +61,7 @@
         border-radius: 3px;
         text-decoration: none;
         font-size: 14px;
+        margin: 0 5px;
       }
       .btn-danger {
         background-color: #dc3545;
@@ -52,54 +69,77 @@
       .btn-primary {
         background-color: #007bff;
       }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .btn-danger:hover {
+        background-color: #c82333;
+      }
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+      .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        color: #007bff;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
-    <h2>Listado de Clientes</h2>
+    <div class="container">
+      <h2>Listado de Clientes</h2>
 
-    <a href="{% url 'registrar_cliente' %}" class="btn btn-primary"
-      >Agregar Cliente</a
-    >
+      <a href="{% url 'registrar_cliente' %}" class="btn btn-primary"
+        >Agregar Cliente</a
+      >
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Apellido</th>
-          <th>Teléfono</th>
-          <th>Email</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for cliente in clientes %}
-        <tr>
-          <td>{{ cliente.nombre }}</td>
-          <td>{{ cliente.apellido }}</td>
-          <td>{{ cliente.telefono }}</td>
-          <td>{{ cliente.email }}</td>
-          <td>
-            <a
-              href="{% url 'editar_cliente' cliente.id %}"
-              class="btn btn-primary"
-              >Editar</a
-            >
-            <a
-              href="{% url 'eliminar_cliente' cliente.id %}"
-              class="btn btn-danger"
-              onclick="return confirm('¿Estás seguro de eliminar a {{ cliente.nombre }} {{ cliente.apellido }}?')"
-              >Eliminar</a
-            >
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5">No hay clientes registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cliente in clientes %}
+          <tr>
+            <td>{{ cliente.nombre }}</td>
+            <td>{{ cliente.apellido }}</td>
+            <td>{{ cliente.telefono }}</td>
+            <td>{{ cliente.email }}</td>
+            <td>
+              <a
+                href="{% url 'editar_cliente' cliente.id %}"
+                class="btn btn-primary"
+                >Editar</a
+              >
+              <a
+                href="{% url 'eliminar_cliente' cliente.id %}"
+                class="btn btn-danger"
+                onclick="return confirm('¿Estás seguro de eliminar a {{ cliente.nombre }} {{ cliente.apellido }}?')"
+                >Eliminar</a
+              >
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">No hay clientes registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
 
-    <a href="{% url 'listar_servicios' %}">Volver al menú principal</a>
+      <a href="{% url 'listar_servicios' %}" class="back-link"
+        >Volver al menú principal</a
+      >
+    </div>
   </body>
 </html>

@@ -3,6 +3,29 @@
   <head>
     <title>Listado de Servicios</title>
     <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 1000px;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -17,73 +40,131 @@
       }
       th {
         background-color: #f2f2f2;
+        font-weight: bold;
+        color: #333;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      tr:hover {
+        background-color: #f1f1f1;
       }
       .btn {
+        display: inline-block;
         padding: 5px 10px;
         background-color: #007bff;
         color: white;
         text-decoration: none;
         border-radius: 3px;
+        margin: 0 5px;
       }
       .btn-danger {
         background-color: #dc3545;
       }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .btn-danger:hover {
+        background-color: #c82333;
+      }
+      .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        color: #007bff;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .details-table {
+        width: 100%;
+        margin: 10px 0;
+        border-collapse: collapse;
+      }
+      .details-table th,
+      .details-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .details-table th {
+        background-color: #f8f9fa;
+      }
     </style>
   </head>
   <body>
-    <h2>Listado de Servicios</h2>
+    <div class="container">
+      <h2>Listado de Servicios</h2>
 
-    <a href="{% url 'registrar_servicio' %}" class="btn">Agregar Servicio</a>
+      <a href="{% url 'registrar_servicio' %}" class="btn">Agregar Servicio</a>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Vehículo</th>
-          <th>Tipo de Servicio</th>
-          <th>Precio Total</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for servicio in servicios %}
-        <tr>
-          <td>{{ servicio.fecha_servicio }}</td>
-          <td>{{ servicio.cliente.nombre }} {{ servicio.cliente.apellido }}</td>
-          <td>
-            {% if servicio.vehiculo %} {{ servicio.vehiculo.marca }} {{
-            servicio.vehiculo.modelo }} {{ servicio.vehiculo.anio }} {% else %}
-            Sin vehículo asociado {% endif %}
-          </td>
-          <td>
-            <ul>
-              {% for detalle in servicio.detalleservicio_set.all %}
-              <li>{{ detalle.tipo_servicio.nombre_servicio }}</li>
-              {% endfor %}
-            </ul>
-          </td>
-          <td>$ {{ servicio.total_precio|floatformat:2 }}</td>
-          <td>
-            <a href="{% url 'editar_servicio' servicio.id %}" class="btn"
-              >Editar</a
-            >
-            <a
-              href="{% url 'eliminar_servicio' servicio.id %}"
-              class="btn btn-danger"
-              onclick="return confirm('¿Seguro que deseas eliminar este servicio?')"
-              >Eliminar</a
-            >
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6">No hay servicios registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Vehículo</th>
+            <th>Detalles del Servicio</th>
+            <th>Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for servicio in servicios %}
+          <tr>
+            <td>{{ servicio.fecha_servicio|date:"F j, Y" }}</td>
+            <td>
+              {{ servicio.cliente.nombre }} {{ servicio.cliente.apellido }}
+            </td>
+            <td>
+              {% if servicio.vehiculo %} {{ servicio.vehiculo.marca }} {{
+              servicio.vehiculo.modelo }} ({{ servicio.vehiculo.anio }}) {% else
+              %} Sin vehículo asociado {% endif %}
+            </td>
+            <td>
+              <table class="details-table">
+                <thead>
+                  <tr>
+                    <th>Tipo de Servicio</th>
+                    <th>Precio Final</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for detalle in servicio.detalles.all %}
+                  <tr>
+                    <td>{{ detalle.tipo_servicio.nombre_servicio }}</td>
+                    <td>${{ detalle.precio_final|floatformat:2 }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </td>
+            <td>${{ servicio.total_servicio|floatformat:2 }}</td>
+            <td>
+              <a href="{% url 'editar_servicio' servicio.id %}" class="btn"
+                >Editar</a
+              >
+              <a
+                href="{% url 'eliminar_servicio' servicio.id %}"
+                class="btn btn-danger"
+                onclick="return confirm('¿Seguro que deseas eliminar este servicio?')"
+              >
+                Eliminar
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">No hay servicios registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
 
-    <a href="{% url 'listar_clientes' %}">Volver al menú principal</a>
+      <a href="{% url 'listar_clientes' %}" class="back-link"
+        >Volver al menú principal</a
+      >
+    </div>
   </body>
 </html>

@@ -5,33 +5,59 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        margin: 20px;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
       }
-      form {
-        background-color: #f9f9f9;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
+      .form-container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
         max-width: 600px;
       }
       h2 {
+        text-align: center;
         color: #333;
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #555;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
       }
       button {
         background-color: #4caf50;
         color: white;
-        padding: 10px 15px;
+        padding: 0.75rem 1.5rem;
         border: none;
+        border-radius: 4px;
         cursor: pointer;
-        font-size: 14px;
-        border-radius: 5px;
+        font-size: 1rem;
+        width: 100%;
       }
       button:hover {
         background-color: #45a049;
       }
       a {
-        display: inline-block;
-        margin-top: 10px;
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
         color: #007bff;
         text-decoration: none;
       }
@@ -41,13 +67,24 @@
     </style>
   </head>
   <body>
-    <h2>Registrar Servicio en Catálogo</h2>
+    <div class="form-container">
+      <h2>Registrar Servicio en Catálogo</h2>
 
-    <form method="post">
-      {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Guardar Servicio</button>
-    </form>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="id_nombre_servicio">Nombre del Servicio:</label>
+          {{ form.nombre_servicio }}
+        </div>
+        <div class="form-group">
+          <label for="id_precio_base">Precio Base:</label>
+          {{ form.precio_base }}
+        </div>
 
-    <a href="{% url 'listar_servicios_catalogo' %}">Cancelar y regresar</a>
+        <button type="submit">Guardar Servicio</button>
+      </form>
+
+      <a href="{% url 'listar_servicios_catalogo' %}">Cancelar y regresar</a>
+    </div>
   </body>
 </html>

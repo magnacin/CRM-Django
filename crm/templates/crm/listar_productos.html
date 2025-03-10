@@ -12,7 +12,6 @@
         <th>Descripción</th>
         <th>Cantidad</th>
         <th>Precio Unitario</th>
-        <!-- Asegurar que esta columna exista -->
         <th>Acciones</th>
       </tr>
     </thead>
@@ -23,7 +22,6 @@
         <td>{{ producto.descripcion }}</td>
         <td>{{ producto.cantidad }}</td>
         <td>${{ producto.precio_unitario|floatformat:2 }}</td>
-        <!-- Mostrar precio con 2 decimales -->
         <td>
           <a
             href="{% url 'editar_producto' producto.id %}"
@@ -33,6 +31,7 @@
           <a
             href="{% url 'eliminar_producto' producto.id %}"
             class="btn btn-danger btn-sm"
+            onclick="return confirm('¿Estás seguro de eliminar este producto?')"
             >Eliminar</a
           >
         </td>

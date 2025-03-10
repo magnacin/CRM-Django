@@ -2,37 +2,211 @@
 <html lang="es">
   <head>
     <title>Formulario de Servicio</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .form-container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 800px;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #555;
+      }
+      select,
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+      }
+      th,
+      td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        color: #333;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      a {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .add-item {
+        margin-bottom: 1rem;
+      }
+    </style>
   </head>
   <body>
-    <h2>Registrar Servicio</h2>
+    <div class="form-container">
+      <h2>Registrar Servicio</h2>
 
-    <form method="post">
-      {% csrf_token %} {{ form.as_p }}
+      <form method="post" id="servicioForm">
+        {% csrf_token %}
 
-      <h3>Detalles del Servicio</h3>
-      {{ formset.management_form }}
-      <table>
-        <thead>
-          <tr>
-            <th>Tipo de Servicio</th>
-            <th>Precio Final</th>
-            <th>Eliminar</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for form in formset %}
-          <tr>
-            <td>{{ form.tipo_servicio }}</td>
-            <td>{{ form.precio_final }}</td>
-            <td>{{ form.DELETE }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        <!-- Campos principales del servicio -->
+        <label for="id_cliente"><strong>Cliente:</strong></label>
+        {{ form.cliente }}
 
-      <button type="submit">Guardar Servicio</button>
-    </form>
+        <label for="id_vehiculo"><strong>Vehículo:</strong></label>
+        {{ form.vehiculo }}
 
-    <a href="{% url 'listar_servicios' %}">Cancelar y regresar</a>
+        <!-- Detalles del servicio -->
+        <h3>Detalles del Servicio</h3>
+        {{ formset.management_form }}
+        <table id="detalle-servicio-table">
+          <thead>
+            <tr>
+              <th>Tipo de Servicio</th>
+              <th>Precio Final</th>
+              <th>Eliminar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for form in formset %}
+            <tr class="detalle-item">
+              <td>{{ form.tipo_servicio }}</td>
+              <td>{{ form.precio_final }}</td>
+              <td>{{ form.DELETE }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Botón para agregar más detalles -->
+        <button type="button" id="agregar-detalle" class="add-item">
+          Agregar Detalle
+        </button>
+
+        <!-- Botón para guardar el servicio -->
+        <button type="submit">Guardar Servicio</button>
+      </form>
+
+      <a href="{% url 'listar_servicios' %}">Cancelar y regresar</a>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const clienteSelect = document.getElementById("id_cliente");
+        const vehiculoSelect = document.getElementById("id_vehiculo");
+        const detalleTable = document.getElementById("detalle-servicio-table");
+        const agregarDetalleBtn = document.getElementById("agregar-detalle");
+        const totalForms = document.getElementById("id_form-TOTAL_FORMS");
+
+        // Función para obtener los vehículos asociados al cliente seleccionado
+        clienteSelect.addEventListener("change", function () {
+          const clienteId = clienteSelect.value;
+
+          fetch(`/crm/ajax/vehiculos/${clienteId}/`)
+            .then((response) => response.json())
+            .then((data) => {
+              vehiculoSelect.innerHTML =
+                '<option value="">Sin vehículo asociado</option>';
+              data.forEach((vehiculo) => {
+                vehiculoSelect.innerHTML += `<option value="${vehiculo.id}">${vehiculo.marca} ${vehiculo.modelo} (${vehiculo.anio})</option>`;
+              });
+            })
+            .catch((error) =>
+              console.error("Error al obtener vehículos:", error)
+            );
+        });
+
+        // Función para agregar un nuevo detalle de servicio
+        agregarDetalleBtn.addEventListener("click", function () {
+          const formCount = parseInt(totalForms.value);
+          const newRow = document.createElement("tr");
+          newRow.classList.add("detalle-item");
+          newRow.innerHTML = `
+            <td>
+              <select name="form-${formCount}-tipo_servicio" id="id_form-${formCount}-tipo_servicio">
+                <option value="">Seleccione un servicio</option>
+                {% for servicio in catalogoservicio_list %}
+                  <option value="{{ servicio.id }}">{{ servicio.nombre_servicio }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <input type="number" name="form-${formCount}-precio_final" id="id_form-${formCount}-precio_final" readonly>
+            </td>
+            <td>
+              <input type="checkbox" name="form-${formCount}-DELETE" id="id_form-${formCount}-DELETE">
+            </td>
+          `;
+
+          detalleTable.querySelector("tbody").appendChild(newRow);
+          totalForms.value = formCount + 1;
+
+          // Agregar evento para actualizar el precio final cuando se selecciona un servicio
+          const nuevoSelect = newRow.querySelector(
+            "select[name$='tipo_servicio']"
+          );
+          nuevoSelect.addEventListener("change", function () {
+            const servicioId = this.value;
+            const precioInput = this.closest("tr").querySelector(
+              "input[name$='precio_final']"
+            );
+
+            if (servicioId) {
+              fetch(`/crm/ajax/servicio-precio/${servicioId}/`)
+                .then((response) => response.json())
+                .then((data) => {
+                  precioInput.value = data.precio; // Asigna el precio obtenido
+                })
+                .catch((error) =>
+                  console.error("Error al obtener precio del servicio:", error)
+                );
+            }
+          });
+        });
+      });
+    </script>
   </body>
 </html>

@@ -3,6 +3,7 @@ from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from datetime import date, datetime
+from django.http import JsonResponse  # Nueva importación
 from .models import (
     Cliente, Vehiculo, Servicio, DetalleServicio, 
     Cotizacion, DetalleCotizacion, Producto, CatalogoServicio, ModuloBolsaAire
@@ -33,7 +34,6 @@ def validar_campo_unico(modelo, campo, valor, instancia=None):
 def listar_clientes(request):
     clientes = Cliente.objects.all()
     return render(request, 'crm/listar_clientes.html', {'clientes': clientes})
-
 
 
 def registrar_cliente(request):
@@ -105,10 +105,12 @@ def eliminar_vehiculo(request, pk):
 
 
 # Vistas para Servicios
-def listar_servicios(request):
-    servicios = Servicio.objects.all()
-    return render(request, 'crm/listar_servicios.html', {'servicios': servicios})
+from django.shortcuts import render
+from .models import Servicio
 
+def listar_servicios(request):
+    servicios = Servicio.objects.all().select_related('cliente', 'vehiculo').prefetch_related('detalles')
+    return render(request, 'crm/listar_servicios.html', {'servicios': servicios})
 
 
 def registrar_servicio(request):
@@ -119,7 +121,8 @@ def registrar_servicio(request):
             return redirect('listar_servicios')
     else:
         form = ServicioForm()
-    return render(request, 'crm/servicio_form.html', {'form': form, 'formset': formset})
+    return render(request, 'crm/servicio_form.html', {'form': form})
+
 
 def editar_servicio(request, pk):
     servicio = get_object_or_404(Servicio, pk=pk)
@@ -130,7 +133,7 @@ def editar_servicio(request, pk):
             return redirect('listar_servicios')
     else:
         form = ServicioForm(instance=servicio)
-    return render(request, 'crm/servicio_form.html', {'form': form, 'formset': formset})
+    return render(request, 'crm/servicio_form.html', {'form': form})
 
 
 def eliminar_servicio(request, pk):
@@ -142,6 +145,9 @@ def eliminar_servicio(request, pk):
 
 
 # Vistas para Catálogo de Servicios
+from django.shortcuts import render
+from .models import CatalogoServicio
+
 def listar_servicios_catalogo(request):
     servicios = CatalogoServicio.objects.all()
     return render(request, 'crm/listar_servicios_catalogo.html', {'servicios': servicios})
@@ -157,6 +163,7 @@ def registrar_servicio_catalogo(request):
         form = CatalogoServicioForm()
     return render(request, 'crm/servicio_catalogo_form.html', {'form': form})
 
+
 def editar_servicio_catalogo(request, pk):
     servicio = get_object_or_404(CatalogoServicio, pk=pk)
     if request.method == 'POST':
@@ -167,6 +174,7 @@ def editar_servicio_catalogo(request, pk):
     else:
         form = CatalogoServicioForm(instance=servicio)
     return render(request, 'crm/servicio_catalogo_form.html', {'form': form})
+
 
 def eliminar_servicio_catalogo(request, pk):
     servicio = get_object_or_404(CatalogoServicio, pk=pk)
@@ -218,18 +226,37 @@ def listar_cotizaciones(request):
     cotizaciones = Cotizacion.objects.all()
     return render(request, 'crm/listar_cotizaciones.html', {'cotizaciones': cotizaciones})
 
+from django.shortcuts import render, redirect
+from .models import Cotizacion, CatalogoServicio
+from .forms import CotizacionForm
+
+def crear_cotizacion(request):
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST)
+        if form.is_valid():
+            cotizacion = form.save()
+            cotizacion.calcular_total()  # Calcula el precio final
+            return redirect('listar_cotizaciones')
+    else:
+        form = CotizacionForm()
+    return render(request, 'crear_cotizacion.html', {'form': form})
+
+
+from django.shortcuts import render, redirect
+from .models import Cotizacion, CatalogoServicio
+from .forms import CotizacionForm
 
 def registrar_cotizacion(request):
     if request.method == 'POST':
         form = CotizacionForm(request.POST)
-        # formset = DetalleCotizacionFormSet(request.POST)
         if form.is_valid():
-            form.save()
+            cotizacion = form.save(commit=False)  # No guardar todavía
+            cotizacion.calcular_total()  # Calcular el precio final
+            cotizacion.save()  # Guardar la cotización
             return redirect('listar_cotizaciones')
     else:
         form = CotizacionForm()
     return render(request, 'crm/cotizacion_form.html', {'form': form})
-
 
 def editar_cotizacion(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
@@ -250,7 +277,8 @@ def eliminar_cotizacion(request, pk):
         return redirect('listar_cotizaciones')
     return render(request, 'crm/confirmar_eliminar.html', {'obj': cotizacion})
 
-# Funcion para registar un modulo desde servicio
+
+# Función para registrar un módulo desde servicio
 def registrar_modulo_desde_servicio(request, servicio_id):
     servicio = get_object_or_404(Servicio, pk=servicio_id)
 
@@ -275,3 +303,35 @@ def registrar_modulo_desde_servicio(request, servicio_id):
 def obtener_precio_producto(request, producto_id):
     producto = get_object_or_404(Producto, pk=producto_id)
     return JsonResponse({'precio': producto.precio_unitario})
+
+
+# Nueva vista para obtener vehículos por cliente
+def obtener_vehiculos_por_cliente(request, cliente_id):
+    vehiculos = Vehiculo.objects.filter(cliente_id=cliente_id).values('id', 'marca', 'modelo', 'anio')
+    return JsonResponse(list(vehiculos), safe=False)
+
+from django.shortcuts import render, redirect
+from .models import Servicio, DetalleServicio, CatalogoServicio
+from .forms import ServicioForm, DetalleServicioFormSet
+
+from django.shortcuts import render, redirect
+from .forms import ServicioForm, DetalleServicioFormSet
+
+def crear_servicio(request):
+    if request.method == 'POST':
+        form = ServicioForm(request.POST)
+        if form.is_valid():
+            servicio = form.save()
+            servicio.calcular_total()  # Calcula el precio final
+            return redirect('listar_servicios')
+    else:
+        form = ServicioForm()
+    return render(request, 'crear_servicio.html', {'form': form})
+
+
+from django.http import JsonResponse
+from .models import Vehiculo
+
+def ajax_vehiculos(request, cliente_id):
+    vehiculos = Vehiculo.objects.filter(cliente_id=cliente_id).values('id', 'marca', 'modelo', 'anio')
+    return JsonResponse(list(vehiculos), safe=False)

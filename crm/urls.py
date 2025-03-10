@@ -6,10 +6,8 @@ from .views import (
     listar_servicios, registrar_servicio, editar_servicio, eliminar_servicio,
     listar_servicios_catalogo, registrar_servicio_catalogo, editar_servicio_catalogo, eliminar_servicio_catalogo,
     listar_productos, registrar_producto, editar_producto, eliminar_producto, listar_cotizaciones, registrar_cotizacion, eliminar_cotizacion,
-    obtener_precio_producto, editar_cotizacion
+    obtener_precio_producto, editar_cotizacion, obtener_vehiculos_por_cliente, ajax_vehiculos
 )
-
-
 
 urlpatterns = [
     path('clientes/', views.listar_clientes, name='listar_clientes'),
@@ -21,6 +19,8 @@ urlpatterns = [
     path('vehiculos/nuevo/', views.registrar_vehiculo, name='registrar_vehiculo'),
     path('vehiculos/editar/<int:pk>/', views.editar_vehiculo, name='editar_vehiculo'),
     path('vehiculos/eliminar/<int:pk>/', views.eliminar_vehiculo, name='eliminar_vehiculo'),
+    path('ajax/vehiculos/cliente/<int:cliente_id>/', views.obtener_vehiculos_por_cliente, name='obtener_vehiculos_por_cliente'),
+    path('ajax/vehiculos/<int:cliente_id>/', views.obtener_vehiculos_por_cliente, name='obtener_vehiculos_por_cliente'),
     # Servicios
     path('servicios/', views.listar_servicios, name='listar_servicios'),
     path('servicios/nuevo/', views.registrar_servicio, name='registrar_servicio'),
@@ -35,10 +35,9 @@ urlpatterns = [
     # Cotizaciones
     path('cotizaciones/', listar_cotizaciones, name='listar_cotizaciones'),
     path('cotizaciones/nuevo/', registrar_cotizacion, name='registrar_cotizacion'),
+    path('ajax/vehiculos/<int:cliente_id>/', ajax_vehiculos, name='ajax_vehiculos'),
     path('cotizaciones/eliminar/<int:pk>/', eliminar_cotizacion, name='eliminar_cotizacion'),
     path('cotizaciones/editar/<int:pk>/', editar_cotizacion, name='editar_cotizacion'),
-
-
     # Productos
     path('productos/', views.listar_productos, name='listar_productos'),
     path('productos/nuevo/', views.registrar_producto, name='registrar_producto'),

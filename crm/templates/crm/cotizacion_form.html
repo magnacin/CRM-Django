@@ -1,249 +1,110 @@
-{% extends "crm/base.html" %} {% block content %}
-<div class="container mt-4">
-  <h2>
-    {% if form.instance.pk %}Editar{% else %}Registrar{% endif %} Cotización
-  </h2>
-
-  <form method="post" id="cotizacionForm">
-    {% csrf_token %}
-
-    <div class="form-group">
-      <label for="id_numero_cotizacion"
-        ><strong>Número de Cotización:</strong></label
-      >
-      <input
-        type="text"
-        class="form-control"
-        name="numero_cotizacion"
-        id="id_numero_cotizacion"
-        value="{{ form.numero_cotizacion.value|default_if_none:'' }}"
-        readonly
-      />
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Crear Cotización</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .form-container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 800px;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #555;
+      }
+      select,
+      input,
+      textarea {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      a {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h2>Crear Cotización</h2>
+      <form method="post">
+        {% csrf_token %} {{ form.as_p }}
+        <button type="submit">Guardar Cotización</button>
+      </form>
+      <a href="{% url 'listar_cotizaciones' %}">Cancelar y regresar</a>
     </div>
 
-    <div class="form-group">
-      <label for="id_fecha"><strong>Fecha:</strong></label>
-      <input
-        type="date"
-        class="form-control"
-        name="fecha"
-        id="id_fecha"
-        value="{{ form.fecha.value|default_if_none:'' }}"
-        required
-      />
-    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const clienteSelect = document.getElementById("id_cliente");
+        const vehiculoSelect = document.getElementById("id_vehiculo");
 
-    <div class="form-group">
-      <label for="id_cliente"><strong>Cliente:</strong></label>
-      {{ form.cliente }}
-    </div>
+        // Función para obtener los vehículos asociados al cliente seleccionado
+        clienteSelect.addEventListener("change", function () {
+          const clienteId = clienteSelect.value;
 
-    <div class="form-group">
-      <label for="id_vehiculo"><strong>Vehículo (Opcional):</strong></label>
-      {{ form.vehiculo }}
-    </div>
-
-    <hr />
-
-    <h4>Detalles de la Cotización</h4>
-
-    <div id="detalle_cotizacion">
-      {{ formset.management_form }} {% for form in formset %}
-      <div class="detalle-item">
-        <div class="form-group">
-          <label>Producto:</label>
-          {{ form.producto }}
-        </div>
-
-        <div class="form-group">
-          <label>Cantidad:</label>
-          <input
-            type="number"
-            name="{{ form.cantidad.name }}"
-            class="form-control cantidad-input"
-            min="1"
-            value="{{ form.cantidad.value|default_if_none:'1' }}"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label>Precio Unitario:</label>
-          <input
-            type="text"
-            name="{{ form.precio_unitario.name }}"
-            class="form-control precio-unitario-input"
-            value="{{ form.precio_unitario.value|default_if_none:'' }}"
-            readonly
-          />
-        </div>
-
-        <div class="form-group">
-          <label>Subtotal:</label>
-          <input
-            type="text"
-            name="subtotal"
-            class="form-control subtotal-input"
-            value="0.00"
-            readonly
-          />
-        </div>
-
-        <button type="button" class="btn btn-danger btn-sm remove-item">
-          Eliminar
-        </button>
-      </div>
-      {% endfor %}
-    </div>
-
-    <button type="button" id="agregar_producto" class="btn btn-success mt-2">
-      Agregar Producto
-    </button>
-
-    <div class="form-group mt-3">
-      <label><strong>Total General:</strong></label>
-      <input
-        type="text"
-        id="total_general"
-        class="form-control"
-        value="0.00"
-        readonly
-      />
-    </div>
-
-    <button type="submit" class="btn btn-primary mt-3">
-      Guardar Cotización
-    </button>
-    <a href="{% url 'listar_cotizaciones' %}" class="btn btn-secondary mt-3"
-      >Cancelar</a
-    >
-  </form>
-</div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    var fechaInput = document.getElementById("id_fecha");
-    if (!fechaInput.value) {
-      var today = new Date();
-      var formattedDate = today.toISOString().split("T")[0];
-      fechaInput.value = formattedDate;
-    }
-
-    function actualizarTotal() {
-      let total = 0;
-      document.querySelectorAll(".subtotal-input").forEach(function (subtotal) {
-        total += parseFloat(subtotal.value) || 0;
-      });
-      document.getElementById("total_general").value = total.toFixed(2);
-    }
-
-    function actualizarSubtotal(item) {
-      let cantidad =
-        parseFloat(item.querySelector(".cantidad-input").value) || 0;
-      let precio =
-        parseFloat(item.querySelector(".precio-unitario-input").value) || 0;
-      let subtotal = cantidad * precio;
-      item.querySelector(".subtotal-input").value = subtotal.toFixed(2);
-      actualizarTotal();
-    }
-
-    document.querySelectorAll(".detalle-item").forEach(function (item) {
-      item
-        .querySelector(".cantidad-input")
-        .addEventListener("input", function () {
-          actualizarSubtotal(item);
-        });
-
-      item.querySelector(".remove-item").addEventListener("click", function () {
-        item.remove();
-        actualizarTotal();
-      });
-
-      item
-        .querySelector("select[name$='producto']")
-        .addEventListener("change", function () {
-          let productoId = this.value;
-          if (productoId) {
-            fetch(`/crm/productos/${productoId}/precio/`)
+          if (clienteId) {
+            fetch(`/crm/ajax/vehiculos/${clienteId}/`)
               .then((response) => response.json())
               .then((data) => {
-                let inputPrecio = item.querySelector(".precio-unitario-input");
-                inputPrecio.value = data.precio;
-                actualizarSubtotal(item);
-              });
+                vehiculoSelect.innerHTML =
+                  '<option value="">Vehículo no disponible</option>';
+                data.forEach((vehiculo) => {
+                  vehiculoSelect.innerHTML += `<option value="${vehiculo.id}">${vehiculo.marca} ${vehiculo.modelo} (${vehiculo.anio})</option>`;
+                });
+              })
+              .catch((error) =>
+                console.error("Error al obtener vehículos:", error)
+              );
+          } else {
+            vehiculoSelect.innerHTML =
+              '<option value="">Vehículo no disponible</option>';
           }
         });
-    });
-
-    document
-      .getElementById("agregar_producto")
-      .addEventListener("click", function () {
-        let detalleContainer = document.getElementById("detalle_cotizacion");
-        let nuevoItem = document.createElement("div");
-        nuevoItem.classList.add("detalle-item");
-
-        nuevoItem.innerHTML = `
-            <div class="form-group">
-                <label>Producto:</label>
-                <select name="producto" class="form-control">
-                    <option value="">Seleccione un producto</option>
-                    {% for producto in productos %}
-                        <option value="{{ producto.id }}">{{ producto.descripcion }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Cantidad:</label>
-                <input type="number" class="form-control cantidad-input" min="1" value="1" required>
-            </div>
-
-            <div class="form-group">
-                <label>Precio Unitario:</label>
-                <input type="text" class="form-control precio-unitario-input" value="0.00" readonly>
-            </div>
-
-            <div class="form-group">
-                <label>Subtotal:</label>
-                <input type="text" class="form-control subtotal-input" value="0.00" readonly>
-            </div>
-
-            <button type="button" class="btn btn-danger btn-sm remove-item">Eliminar</button>
-        `;
-
-        detalleContainer.appendChild(nuevoItem);
-
-        nuevoItem
-          .querySelector(".cantidad-input")
-          .addEventListener("input", function () {
-            actualizarSubtotal(nuevoItem);
-          });
-
-        nuevoItem
-          .querySelector(".remove-item")
-          .addEventListener("click", function () {
-            nuevoItem.remove();
-            actualizarTotal();
-          });
-
-        nuevoItem
-          .querySelector("select[name$='producto']")
-          .addEventListener("change", function () {
-            let productoId = this.value;
-            if (productoId) {
-              fetch(`/crm/productos/${productoId}/precio/`)
-                .then((response) => response.json())
-                .then((data) => {
-                  let inputPrecio = nuevoItem.querySelector(
-                    ".precio-unitario-input"
-                  );
-                  inputPrecio.value = data.precio;
-                  actualizarSubtotal(nuevoItem);
-                });
-            }
-          });
       });
-  });
-</script>
-
-{% endblock %}
+    </script>
+  </body>
+</html>

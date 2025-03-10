@@ -3,6 +3,29 @@
   <head>
     <title>Listado de Vehículos</title>
     <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 1200px;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -17,65 +40,97 @@
       }
       th {
         background-color: #f2f2f2;
+        font-weight: bold;
+        color: #333;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      tr:hover {
+        background-color: #f1f1f1;
       }
       .btn {
+        display: inline-block;
         padding: 5px 10px;
         background-color: #007bff;
         color: white;
         text-decoration: none;
         border-radius: 3px;
+        margin: 0 5px;
       }
       .btn-danger {
         background-color: #dc3545;
       }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .btn-danger:hover {
+        background-color: #c82333;
+      }
+      .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        color: #007bff;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
-    <h2>Listado de Vehículos</h2>
+    <div class="container">
+      <h2>Listado de Vehículos</h2>
 
-    <a href="{% url 'registrar_vehiculo' %}" class="btn">Agregar Vehículo</a>
+      <a href="{% url 'registrar_vehiculo' %}" class="btn">Agregar Vehículo</a>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Marca</th>
-          <th>Modelo</th>
-          <th>Año</th>
-          <th>VIN</th>
-          <th>Motor</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for vehiculo in vehiculos %}
-        <tr>
-          <td>{{ vehiculo.cliente.nombre }} {{ vehiculo.cliente.apellido }}</td>
-          <td>{{ vehiculo.marca }}</td>
-          <td>{{ vehiculo.modelo }}</td>
-          <td>{{ vehiculo.anio }}</td>
-          <td>{{ vehiculo.vin }}</td>
-          <td>{{ vehiculo.tipo_motor }}</td>
-          <td>
-            <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn"
-              >Editar</a
-            >
-            <a
-              href="{% url 'eliminar_vehiculo' vehiculo.id %}"
-              class="btn btn-danger"
-              onclick="return confirm('¿Seguro que deseas eliminar este vehículo?')"
-              >Eliminar</a
-            >
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7">No hay vehículos registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Año</th>
+            <th>VIN</th>
+            <th>Motor</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vehiculo in vehiculos %}
+          <tr>
+            <td>
+              {{ vehiculo.cliente.nombre }} {{ vehiculo.cliente.apellido }}
+            </td>
+            <td>{{ vehiculo.marca }}</td>
+            <td>{{ vehiculo.modelo }}</td>
+            <td>{{ vehiculo.anio }}</td>
+            <td>{{ vehiculo.vin }}</td>
+            <td>{{ vehiculo.tipo_motor }}</td>
+            <td>
+              <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn"
+                >Editar</a
+              >
+              <a
+                href="{% url 'eliminar_vehiculo' vehiculo.id %}"
+                class="btn btn-danger"
+                onclick="return confirm('¿Seguro que deseas eliminar este vehículo?')"
+                >Eliminar</a
+              >
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">No hay vehículos registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
 
-    <a href="{% url 'listar_servicios' %}">Volver al menú principal</a>
+      <a href="{% url 'listar_servicios' %}" class="back-link"
+        >Volver al menú principal</a
+      >
+    </div>
   </body>
 </html>
