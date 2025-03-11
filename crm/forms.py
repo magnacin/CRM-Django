@@ -131,6 +131,11 @@ from django import forms
 from .models import Cotizacion, Vehiculo
 
 class CotizacionForm(forms.ModelForm):
+
+    fecha_cotizacion = forms.DateField(
+        widget=forms.TextInput(attrs={'type': 'date'}),
+        initial=datetime.today().strftime('%Y-%m-%d')
+    )  # 🔹 Formato de fecha inicial
     class Meta:
         model = Cotizacion
         fields = ['cliente', 'vehiculo', 'tipo_servicio', 'descripcion', 'fecha_cotizacion', 'precio_final', 'aprobada']

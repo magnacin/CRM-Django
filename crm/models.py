@@ -141,7 +141,7 @@ class ModuloBolsaAire(models.Model):
 class Cotizacion(models.Model):
     cliente = models.ForeignKey('Cliente', on_delete=models.CASCADE)
     vehiculo = models.ForeignKey('Vehiculo', on_delete=models.SET_NULL, null=True, blank=True)
-    fecha_cotizacion = models.DateField()
+    fecha_cotizacion = models.DateField(default=datetime.today)
     tipo_servicio = models.ForeignKey('CatalogoServicio', on_delete=models.CASCADE)
     precio_final = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor predeterminado
     descripcion = models.TextField(blank=True, null=True)

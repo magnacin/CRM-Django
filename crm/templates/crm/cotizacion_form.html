@@ -81,8 +81,16 @@
       document.addEventListener("DOMContentLoaded", function () {
         const clienteSelect = document.getElementById("id_cliente");
         const vehiculoSelect = document.getElementById("id_vehiculo");
+        const fechaInput = document.getElementById("id_fecha_cotizacion");
 
-        // Función para obtener los vehículos asociados al cliente seleccionado
+        // 🔹 Autorellenar la fecha con la fecha actual si está vacía
+        if (!fechaInput.value) {
+          let today = new Date();
+          let formattedDate = today.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+          fechaInput.value = formattedDate;
+        }
+
+        // 🔹 Obtener los vehículos asociados al cliente seleccionado
         clienteSelect.addEventListener("change", function () {
           const clienteId = clienteSelect.value;
 
