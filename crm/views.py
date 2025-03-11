@@ -10,7 +10,7 @@ from .models import (
 )
 from .forms import (
     ClienteForm, VehiculoForm, ServicioForm, DetalleServicioForm,
-    CotizacionForm, DetalleCotizacionForm, ProductoForm, CatalogoServicioForm, ModuloBolsaAireForm
+    CotizacionForm, DetalleCotizacionForm,CatalogoServicioForm, ModuloBolsaAireForm # ProductoForm, 
 )
 
 # Funciones auxiliares reutilizables
@@ -242,21 +242,51 @@ def crear_cotizacion(request):
     return render(request, 'crear_cotizacion.html', {'form': form})
 
 
-from django.shortcuts import render, redirect
-from .models import Cotizacion, CatalogoServicio
-from .forms import CotizacionForm
+
+from django.forms import inlineformset_factory
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Cotizacion, DetalleCotizacion, CatalogoServicio
+from .forms import CotizacionForm, DetalleCotizacionForm, DetalleProductoForm, DetalleProducto
 
 def registrar_cotizacion(request):
-    if request.method == 'POST':
+    DetalleProductoFormSet = inlineformset_factory(
+        Cotizacion,
+        DetalleProducto,
+        form=DetalleProductoForm,
+        extra=1,
+        can_delete=True
+    )
+    DetalleServicioFormSet = inlineformset_factory(
+        Cotizacion,
+        DetalleServicio,
+        form=DetalleServicioForm,
+        extra=1,
+        can_delete=True
+    )
+
+    if request.method == "POST":
         form = CotizacionForm(request.POST)
-        if form.is_valid():
-            cotizacion = form.save(commit=False)  # No guardar todavía
-            cotizacion.calcular_total()  # Calcular el precio final
-            cotizacion.save()  # Guardar la cotización
+        formset_productos = DetalleProductoFormSet(request.POST, prefix="productos")
+        formset_servicios = DetalleServicioFormSet(request.POST, prefix="servicios")
+
+        if form.is_valid() and formset_productos.is_valid() and formset_servicios.is_valid():
+            cotizacion = form.save()
+            formset_productos.instance = cotizacion
+            formset_productos.save()
+            formset_servicios.instance = cotizacion
+            formset_servicios.save()
             return redirect('listar_cotizaciones')
     else:
         form = CotizacionForm()
-    return render(request, 'crm/cotizacion_form.html', {'form': form})
+        formset_productos = DetalleProductoFormSet(prefix="productos")
+        formset_servicios = DetalleServicioFormSet(prefix="servicios")
+
+    return render(request, 'crm/cotizacion_form.html', {
+        'form': form,
+        'formset_productos': formset_productos,
+        'formset_servicios': formset_servicios
+    })
+
 
 def editar_cotizacion(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)

@@ -2,7 +2,7 @@ from django.db import models
 import re
 from django.core.validators import RegexValidator, MinValueValidator
 from django.db.models import Sum
-from datetime import datetime
+from datetime import datetime,date
 
 
 # Modelo Cliente
@@ -62,21 +62,6 @@ class Servicio(models.Model):
         self.save()
 
 # Modelo DetalleServicio
-class DetalleServicio(models.Model):
-    servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE, related_name='detalles')
-    tipo_servicio = models.ForeignKey(CatalogoServicio, on_delete=models.CASCADE)
-    precio_final = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def save(self, *args, **kwargs):
-        """Calcula el precio_final basado en el precio_base del CatalogoServicio."""
-        if not self.precio_final:
-            self.precio_final = self.tipo_servicio.precio_base
-        super().save(*args, **kwargs)
-        self.servicio.calcular_total()  # Actualiza el total del servicio
-
-    def __str__(self):
-        return f"{self.tipo_servicio.nombre_servicio} - ${self.precio_final}"
-
 
 # Modelo Venta
 class Venta(models.Model):
@@ -141,36 +126,75 @@ class ModuloBolsaAire(models.Model):
 class Cotizacion(models.Model):
     cliente = models.ForeignKey('Cliente', on_delete=models.CASCADE)
     vehiculo = models.ForeignKey('Vehiculo', on_delete=models.SET_NULL, null=True, blank=True)
-    fecha_cotizacion = models.DateField(default=datetime.today)
+    fecha_cotizacion = models.DateField(default=date.today)  # ✔️ Ahora es editable
     tipo_servicio = models.ForeignKey('CatalogoServicio', on_delete=models.CASCADE)
-    precio_final = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor predeterminado
+    cantidad = models.PositiveIntegerField(default=1)
+    precio_final = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     descripcion = models.TextField(blank=True, null=True)
-    aprobada = models.BooleanField(default=False)
+    aprobada = models.BooleanField(default=False)  
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_general = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def calcular_total(self):
+        """Calcula la suma de todos los subtotales de los productos cotizados."""
+        self.total_general = self.detallecotizacion_set.aggregate(total=models.Sum('subtotal'))['total'] or 0.00
+        self.save()
 
     def __str__(self):
         return f"Cotización {self.id} - {self.cliente}"
 
-    def calcular_total(self):
-        self.precio_final = self.tipo_servicio.precio_base
-        self.save()
 
-# Modelo DetalleCotizacion
 class DetalleCotizacion(models.Model):
-    cotizacion = models.ForeignKey(Cotizacion, on_delete=models.CASCADE)
+    cotizacion = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, related_name="detallecotizacion_set")
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    cantidad = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    precio_unitario = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0.01, message="El precio unitario debe ser mayor que 0.")]
-    )
-    precio_total = models.DecimalField(max_digits=10, decimal_places=2)
+    cantidad = models.PositiveIntegerField(default=1)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Nuevo campo
 
     def save(self, *args, **kwargs):
-        """Calcula el precio_total basado en la cantidad y el precio_unitario."""
-        self.precio_total = self.cantidad * self.precio_unitario
+        """Calcula el subtotal al guardar."""
+        self.subtotal = self.cantidad * self.precio_unitario
         super().save(*args, **kwargs)
-        self.cotizacion.calcular_total()
+        self.cotizacion.calcular_total()  # Actualiza el total de la cotización
 
     def __str__(self):
         return f"{self.producto.descripcion} - {self.cantidad} x ${self.precio_unitario}"
+
+# Detalle de Producto
+from django.db import models
+from django.core.validators import MinValueValidator
+
+class DetalleProducto(models.Model):
+    cotizacion = models.ForeignKey('Cotizacion', on_delete=models.CASCADE, related_name='productos')
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+
+    def save(self, *args, **kwargs):
+        """Calcula el subtotal basado en cantidad y precio unitario."""
+        self.subtotal = self.cantidad * self.precio_unitario
+        super().save(*args, **kwargs)
+        self.cotizacion.calcular_total()  # Actualiza el total de la cotización
+
+    def __str__(self):
+        return f"{self.producto.descripcion} - {self.cantidad} x ${self.precio_unitario}"
+
+
+class DetalleServicio(models.Model):
+    cotizacion = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, related_name='detalles_servicio', null=True, blank=True)  # Nueva relación con Cotización
+    servicio = models.ForeignKey(CatalogoServicio, on_delete=models.CASCADE)
+    servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE, related_name='detalles')
+    tipo_servicio = models.ForeignKey(CatalogoServicio, on_delete=models.CASCADE)
+    precio_final = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def save(self, *args, **kwargs):
+        """Calcula el precio_final basado en el precio_base del CatalogoServicio."""
+        if not self.precio_final:
+            self.precio_final = self.tipo_servicio.precio_base
+        super().save(*args, **kwargs)
+        self.servicio.calcular_total()  # Actualiza el total del servicio
+
+    def __str__(self):
+        return f"{self.tipo_servicio.nombre_servicio} - ${self.precio_final}"
+

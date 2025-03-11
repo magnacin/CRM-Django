@@ -130,44 +130,42 @@ from .models import Cotizacion, Vehiculo
 from django import forms
 from .models import Cotizacion, Vehiculo
 
+from django import forms
+from django.forms import inlineformset_factory
+from .models import Cotizacion, DetalleCotizacion
+
 class CotizacionForm(forms.ModelForm):
 
     fecha_cotizacion = forms.DateField(
-        widget=forms.TextInput(attrs={'type': 'date'}),
-        initial=datetime.today().strftime('%Y-%m-%d')
-    )  # 🔹 Formato de fecha inicial
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        required=True
+    )
     class Meta:
         model = Cotizacion
-        fields = ['cliente', 'vehiculo', 'tipo_servicio', 'descripcion', 'fecha_cotizacion', 'precio_final', 'aprobada']
-
+        fields = ['cliente', 'vehiculo', 'fecha_cotizacion', 'tipo_servicio', 'precio_final', 'descripcion']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Agregar una opción "Vehículo no disponible" al campo vehiculo
         self.fields['vehiculo'].queryset = Vehiculo.objects.none()  # Inicialmente sin vehículos
         self.fields['vehiculo'].required = False
         self.fields['vehiculo'].empty_label = "Vehículo no disponible"
+        
 
 class DetalleCotizacionForm(forms.ModelForm):
     class Meta:
         model = DetalleCotizacion
-        fields = ['producto', 'cantidad', 'precio_unitario']
+        exclude = ['subtotal']
+        #fields = ['producto', 'cantidad', 'precio_unitario', 'subtotal']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'subtotal' in self.fields:
+            self.fields['subtotal'].widget.attrs['readonly'] = True
 
+# Formset para manejar múltiples productos en una cotización
+DetalleCotizacionFormSet = inlineformset_factory(
+    Cotizacion, DetalleCotizacion, form=DetalleCotizacionForm, extra=1, can_delete=True
+)
 
-class ProductoForm(forms.ModelForm):
-    class Meta:
-        model = Producto
-        fields = ['descripcion', 'precio_unitario', 'cantidad']
-
-    def clean_descripcion(self):
-        descripcion = convertir_a_mayusculas(self.cleaned_data.get('descripcion'))
-        validar_campo_unico(Producto, 'descripcion', descripcion, self.instance)
-        return descripcion
-
-    def clean_precio_unitario(self):
-        precio = self.cleaned_data.get('precio_unitario')
-        if precio is None or precio <= 0:
-            raise ValidationError("El precio debe ser mayor a 0.")
-        return precio
 
 
 class CatalogoServicioForm(forms.ModelForm):
@@ -202,3 +200,17 @@ class ModuloBolsaAireForm(forms.ModelForm):
         cleaned_data['modelo'] = convertir_a_mayusculas(cleaned_data.get('modelo', ''))
         cleaned_data['numero_parte'] = convertir_a_mayusculas(cleaned_data.get('numero_parte', ''))
         return cleaned_data
+    
+
+from django import forms
+from .models import DetalleProducto
+
+class DetalleProductoForm(forms.ModelForm):
+    class Meta:
+        model = DetalleProducto
+        exlude = fields = ['producto', 'cantidad', 'precio_unitario'] #, 'subtotal']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacer el campo subtotal solo de lectura
+        # self.fields['subtotal'].widget.attrs['readonly'] = True
