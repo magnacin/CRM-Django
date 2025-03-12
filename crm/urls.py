@@ -6,7 +6,7 @@ from .views import (
     listar_servicios, registrar_servicio, editar_servicio, eliminar_servicio,
     listar_servicios_catalogo, registrar_servicio_catalogo, editar_servicio_catalogo, eliminar_servicio_catalogo,
     listar_productos, registrar_producto, editar_producto, eliminar_producto, listar_cotizaciones, registrar_cotizacion, eliminar_cotizacion,
-    obtener_precio_producto, editar_cotizacion, obtener_vehiculos_por_cliente, ajax_vehiculos
+    obtener_precio_producto, editar_cotizacion, obtener_vehiculos_por_cliente, ajax_vehiculos, registrar_reparacion, listar_reparaciones
 )
 
 urlpatterns = [
@@ -44,5 +44,10 @@ urlpatterns = [
     path('productos/editar/<int:pk>/', views.editar_producto, name='editar_producto'),
     path('productos/eliminar/<int:pk>/', views.eliminar_producto, name='eliminar_producto'),
     path('productos/<int:producto_id>/precio/', obtener_precio_producto, name='obtener_precio_producto'),
-
+    path("ajax/productos/", views.obtener_productos, name="ajax_productos"),
+    path("ajax/servicios/", views.obtener_servicios, name="ajax_servicios"),
+    path('modulos/nuevo/', registrar_reparacion, name='registrar_reparacion'),
+    path('modulos/', listar_reparaciones, name='listar_reparaciones'),
 ]
+
+

@@ -1,11 +1,10 @@
 from django import forms
-from django.db import models
-import re
 from django.core.exceptions import ValidationError
-from datetime import date, datetime
+from datetime import date
+import re
 from .models import (
     Cliente, Vehiculo, Servicio, DetalleServicio,
-    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio, ModuloBolsaAire
+    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio, ModuloBolsaAire, DetalleProducto
 )
 from django.forms import inlineformset_factory
 
@@ -47,9 +46,9 @@ class ClienteForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_data['nombre'] = convertir_a_mayusculas(cleaned_data.get('nombre', ''))
-        cleaned_data['apellido'] = convertir_a_mayusculas(cleaned_data.get('apellido', ''))
-        cleaned_data['email'] = convertir_a_mayusculas(cleaned_data.get('email', ''))
+        for field in ['nombre', 'apellido', 'email']:
+            if field in cleaned_data:
+                cleaned_data[field] = convertir_a_mayusculas(cleaned_data[field])
         return cleaned_data
 
 
@@ -60,9 +59,9 @@ class VehiculoForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_data['marca'] = convertir_a_mayusculas(cleaned_data.get('marca', ''))
-        cleaned_data['modelo'] = convertir_a_mayusculas(cleaned_data.get('modelo', ''))
-        cleaned_data['vin'] = convertir_a_mayusculas(cleaned_data.get('vin', ''))
+        for field in ['marca', 'modelo', 'vin']:
+            if field in cleaned_data:
+                cleaned_data[field] = convertir_a_mayusculas(cleaned_data[field])
 
         vin = cleaned_data.get('vin')
         marca = cleaned_data.get('marca')
@@ -71,15 +70,11 @@ class VehiculoForm(forms.ModelForm):
 
         if vin:
             validar_campo_unico(Vehiculo, 'vin', vin, self.instance)
-        else:
-            if Vehiculo.objects.filter(marca=marca, modelo=modelo, anio=anio).exclude(pk=self.instance.pk).exists():
-                raise ValidationError('Ya existe un vehículo con la misma marca, modelo y año.')
+        elif Vehiculo.objects.filter(marca=marca, modelo=modelo, anio=anio).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ya existe un vehículo con la misma marca, modelo y año.')
 
         return cleaned_data
 
-
-from django import forms
-from .models import Servicio
 
 class ServicioForm(forms.ModelForm):
     class Meta:
@@ -88,19 +83,18 @@ class ServicioForm(forms.ModelForm):
 
 
 class DetalleServicioForm(forms.ModelForm):
-    class Meta:
-        model = DetalleServicio
-        fields = ['tipo_servicio', 'precio_final']
-
     tipo_servicio = forms.ModelChoiceField(
         queryset=CatalogoServicio.objects.all(),
         empty_label="Seleccione un servicio...",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    
     precio_final = forms.DecimalField(
         widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
     )
+
+    class Meta:
+        model = DetalleServicio
+        fields = ['tipo_servicio', 'precio_final']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,56 +110,43 @@ class DetalleServicioForm(forms.ModelForm):
         return cleaned_data
 
 
-# Formset para DetalleServicio
+# Formsets
 DetalleServicioFormSet = inlineformset_factory(
     Servicio, DetalleServicio, form=DetalleServicioForm, extra=1, can_delete=True
 )
 
 
-from django import forms
-from .models import Cotizacion
-from django import forms
-from .models import Cotizacion, Vehiculo
-
-from django import forms
-from .models import Cotizacion, Vehiculo
-
-from django import forms
-from django.forms import inlineformset_factory
-from .models import Cotizacion, DetalleCotizacion
-
 class CotizacionForm(forms.ModelForm):
-
     fecha_cotizacion = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date'}),
         required=True
     )
+
     class Meta:
         model = Cotizacion
         fields = ['cliente', 'vehiculo', 'fecha_cotizacion', 'tipo_servicio', 'precio_final', 'descripcion']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Agregar una opción "Vehículo no disponible" al campo vehiculo
-        self.fields['vehiculo'].queryset = Vehiculo.objects.none()  # Inicialmente sin vehículos
+        self.fields['vehiculo'].queryset = Vehiculo.objects.none()
         self.fields['vehiculo'].required = False
         self.fields['vehiculo'].empty_label = "Vehículo no disponible"
-        
+
 
 class DetalleCotizacionForm(forms.ModelForm):
     class Meta:
         model = DetalleCotizacion
         exclude = ['subtotal']
-        #fields = ['producto', 'cantidad', 'precio_unitario', 'subtotal']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if 'subtotal' in self.fields:
             self.fields['subtotal'].widget.attrs['readonly'] = True
 
-# Formset para manejar múltiples productos en una cotización
+
 DetalleCotizacionFormSet = inlineformset_factory(
     Cotizacion, DetalleCotizacion, form=DetalleCotizacionForm, extra=1, can_delete=True
 )
-
 
 
 class CatalogoServicioForm(forms.ModelForm):
@@ -179,38 +160,44 @@ class CatalogoServicioForm(forms.ModelForm):
         return nombre
 
 
+from django import forms
+from .models import ModuloBolsaAire, Cliente, Marca, Modelo
+
 class ModuloBolsaAireForm(forms.ModelForm):
+    nueva_marca = forms.CharField(required=False, max_length=50, label="Nueva Marca")
+    nuevo_modelo = forms.CharField(required=False, max_length=50, label="Nuevo Modelo")
+
     class Meta:
         model = ModuloBolsaAire
-        fields = ['marca', 'modelo', 'anio', 'numero_parte', 'tipo_microprocesador', 'precio_reparacion']
+        fields = ['cliente', 'marca', 'modelo', 'anio', 'numero_parte', 'tipo_microprocesador', 'precio_reparacion']
+    
+    fecha_reparacion = forms.DateField(
+        widget=forms.TextInput(attrs={'readonly': 'readonly'}),  # 🔹 Solo lectura
+        initial=date.today,  # 🔹 Se inicializa con la fecha actual
+        input_formats=['%d-%m-%Y'],  # 🔹 Formato día-mes-año
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.instance.pk and 'initial' not in kwargs:
-            self.initial['fecha_reparacion'] = date.today().strftime('%d-%m-%Y')
+        
+        # Filtrar modelos según la marca seleccionada
+        self.fields['modelo'].queryset = Modelo.objects.none()
 
-    def clean_numero_parte(self):
-        numero_parte = convertir_a_mayusculas(self.cleaned_data.get('numero_parte'))
-        validar_campo_unico(ModuloBolsaAire, 'numero_parte', numero_parte, self.instance)
-        return numero_parte
+        if 'marca' in self.data:
+            try:
+                marca_id = int(self.data.get('marca'))
+                self.fields['modelo'].queryset = Modelo.objects.filter(marca_id=marca_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass
 
-    def clean(self):
-        cleaned_data = super().clean()
-        cleaned_data['marca'] = convertir_a_mayusculas(cleaned_data.get('marca', ''))
-        cleaned_data['modelo'] = convertir_a_mayusculas(cleaned_data.get('modelo', ''))
-        cleaned_data['numero_parte'] = convertir_a_mayusculas(cleaned_data.get('numero_parte', ''))
-        return cleaned_data
-    
 
-from django import forms
-from .models import DetalleProducto
 
 class DetalleProductoForm(forms.ModelForm):
     class Meta:
         model = DetalleProducto
-        exlude = fields = ['producto', 'cantidad', 'precio_unitario'] #, 'subtotal']
+        fields = ['producto', 'cantidad', 'precio_unitario']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Hacer el campo subtotal solo de lectura
-        # self.fields['subtotal'].widget.attrs['readonly'] = True
+        if 'subtotal' in self.fields:
+            self.fields['subtotal'].widget.attrs['readonly'] = True

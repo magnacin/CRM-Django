@@ -107,19 +107,36 @@ class Producto(models.Model):
         return f"{self.descripcion} - ${self.precio_unitario}"
 
 
-# Modelo ModuloBolsaAire
+
+# Modelo Marca
+class Marca(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+# Modelo Modelo de Vehículo
+class Modelo(models.Model):
+    nombre = models.CharField(max_length=50)
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE, related_name="modelos")
+
+    def __str__(self):
+        return f"{self.marca.nombre} - {self.nombre}"
+
+# Modelo de Reparación de Módulo de Bolsa de Aire
 class ModuloBolsaAire(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    fecha_reparacion = models.DateField()
-    marca = models.CharField(max_length=50)
-    modelo = models.CharField(max_length=50)
-    anio = models.IntegerField()
+    cliente = models.ForeignKey("Cliente", on_delete=models.CASCADE)
+    fecha_reparacion = models.DateField(default=date.today)  # Fecha actual por defecto
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
+    modelo = models.ForeignKey(Modelo, on_delete=models.CASCADE)
+    anio = models.IntegerField(choices=[(i, i) for i in range(2010, 2031)])  # Años de 2010 a 2030
     numero_parte = models.CharField(max_length=50, unique=True)
     tipo_microprocesador = models.CharField(max_length=50)
     precio_reparacion = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"{self.marca} {self.modelo} {self.anio} - {self.numero_parte}"
+        return f"{self.marca.nombre} {self.modelo.nombre} {self.anio} - {self.numero_parte}"
+
 
 
 # Modelo Cotizacion

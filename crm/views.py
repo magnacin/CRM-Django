@@ -248,6 +248,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Cotizacion, DetalleCotizacion, CatalogoServicio
 from .forms import CotizacionForm, DetalleCotizacionForm, DetalleProductoForm, DetalleProducto
 
+from datetime import datetime
+from django.db.models import Max
+
 def registrar_cotizacion(request):
     DetalleProductoFormSet = inlineformset_factory(
         Cotizacion,
@@ -264,13 +267,24 @@ def registrar_cotizacion(request):
         can_delete=True
     )
 
+    # 🔹 Obtener la fecha actual en formato dd/mm/yyyy
+    fecha_hoy = datetime.today().strftime('%d/%m/%Y')
+
+    # 🔹 Obtener el número de cotización más alto y sumarle 1
+    ultimo_numero = Cotizacion.objects.aggregate(Max('id'))['id__max']
+    numero_cotizacion = (ultimo_numero + 1) if ultimo_numero else 1
+
     if request.method == "POST":
         form = CotizacionForm(request.POST)
         formset_productos = DetalleProductoFormSet(request.POST, prefix="productos")
         formset_servicios = DetalleServicioFormSet(request.POST, prefix="servicios")
 
         if form.is_valid() and formset_productos.is_valid() and formset_servicios.is_valid():
-            cotizacion = form.save()
+            cotizacion = form.save(commit=False)
+            cotizacion.fecha_cotizacion = datetime.today().date()  # 🔹 Guarda la fecha actual
+            cotizacion.numero_cotizacion = numero_cotizacion  # 🔹 Guarda el número consecutivo
+            cotizacion.save()
+
             formset_productos.instance = cotizacion
             formset_productos.save()
             formset_servicios.instance = cotizacion
@@ -284,8 +298,11 @@ def registrar_cotizacion(request):
     return render(request, 'crm/cotizacion_form.html', {
         'form': form,
         'formset_productos': formset_productos,
-        'formset_servicios': formset_servicios
+        'formset_servicios': formset_servicios,
+        'fecha_hoy': fecha_hoy,  # 🔹 Pasar al template
+        'numero_cotizacion': numero_cotizacion  # 🔹 Pasar al template
     })
+
 
 
 def editar_cotizacion(request, pk):
@@ -365,3 +382,66 @@ from .models import Vehiculo
 def ajax_vehiculos(request, cliente_id):
     vehiculos = Vehiculo.objects.filter(cliente_id=cliente_id).values('id', 'marca', 'modelo', 'anio')
     return JsonResponse(list(vehiculos), safe=False)
+
+from django.http import JsonResponse
+from .models import Producto, CatalogoServicio
+
+# ✅ Endpoint para obtener productos con su precio unitario
+def obtener_productos(request):
+    productos = Producto.objects.values("id", "descripcion", "precio_unitario")
+    return JsonResponse(list(productos), safe=False)
+
+# ✅ Endpoint para obtener servicios con su precio base
+def obtener_servicios(request):
+    servicios = CatalogoServicio.objects.values("id", "nombre_servicio", "precio_base")
+    return JsonResponse(list(servicios), safe=False)
+
+
+from django.shortcuts import render, redirect
+from .models import ModuloBolsaAire, Marca, Modelo
+from .forms import ModuloBolsaAireForm
+
+from datetime import date
+from django.shortcuts import render, redirect
+from .models import ModuloBolsaAire, Marca, Modelo
+from .forms import ModuloBolsaAireForm
+
+def registrar_reparacion(request):
+    if request.method == "POST":
+        form = ModuloBolsaAireForm(request.POST)
+
+        if form.is_valid():
+            nueva_marca = form.cleaned_data.get('nueva_marca')
+            nuevo_modelo = form.cleaned_data.get('nuevo_modelo')
+            marca = form.cleaned_data.get('marca')
+            modelo = form.cleaned_data.get('modelo')
+
+            # 🔹 Si se ingresó una nueva marca, la creamos o buscamos la existente
+            if nueva_marca:
+                marca, created = Marca.objects.get_or_create(nombre=nueva_marca)
+            
+            # 🔹 Si se ingresó un nuevo modelo, lo creamos o buscamos, asegurando que corresponda a la marca
+            if nuevo_modelo and marca:
+                modelo, created = Modelo.objects.get_or_create(nombre=nuevo_modelo, marca=marca)
+
+            # 🔹 Crear la instancia del módulo con la fecha actual
+            reparacion = form.save(commit=False)
+            reparacion.fecha_reparacion = date.today()  # 🔹 Asigna la fecha actual automáticamente
+            reparacion.marca = marca  # 🔹 Asigna la marca correcta
+            reparacion.modelo = modelo  # 🔹 Asigna el modelo correcto
+            reparacion.save()  # 🔹 Guarda la reparación correctamente
+            
+            return redirect('listar_reparaciones')  # 🔹 Redirige a la lista de reparaciones después de guardar
+
+    else:
+        form = ModuloBolsaAireForm()
+
+    return render(request, 'crm/modulo_form.html', {'form': form})
+
+
+from django.shortcuts import render
+from .models import ModuloBolsaAire
+
+def listar_reparaciones(request):
+    reparaciones = ModuloBolsaAire.objects.all()
+    return render(request, 'crm/listar_reparaciones.html', {'reparaciones': reparaciones})

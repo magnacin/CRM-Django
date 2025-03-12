@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Reparaciones de Módulos</title>
+</head>
+<body>
+    <h2>Lista de Reparaciones</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Año</th>
+                <th>Número de Parte</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reparacion in reparaciones %}
+            <tr>
+                <td>{{ reparacion.cliente }}</td>
+                <td>{{ reparacion.fecha_reparacion }}</td>
+                <td>{{ reparacion.marca }}</td>
+                <td>{{ reparacion.modelo }}</td>
+                <td>{{ reparacion.anio }}</td>
+                <td>{{ reparacion.numero_parte }}</td>
+                <td>
+                    <a href="{% url 'editar_reparacion' reparacion.id %}">Editar</a>
+                    <a href="{% url 'eliminar_reparacion' reparacion.id %}">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'registrar_reparacion' %}">Registrar Nueva Reparación</a>
+</body>
+</html>
