@@ -1,13 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from datetime import date
 import re
-from .models import (
-    Cliente, Vehiculo, Servicio, DetalleServicio,
-    Cotizacion, DetalleCotizacion, Producto, CatalogoServicio, ModuloBolsaAire, DetalleProducto
-)
-from django.forms import inlineformset_factory
-
+from django import forms
+from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion, Venta
 
 # Funciones auxiliares reutilizables
 def convertir_a_mayusculas(valor):
@@ -34,7 +29,7 @@ def formatear_telefono(telefono):
     return f'{telefono[:3]}-{telefono[3:6]}-{telefono[6:]}'
 
 
-# Formularios
+# 🔹 Formulario para Cliente
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
@@ -52,6 +47,7 @@ class ClienteForm(forms.ModelForm):
         return cleaned_data
 
 
+# 🔹 Formulario para Vehiculo
 class VehiculoForm(forms.ModelForm):
     class Meta:
         model = Vehiculo
@@ -76,128 +72,75 @@ class VehiculoForm(forms.ModelForm):
         return cleaned_data
 
 
-class ServicioForm(forms.ModelForm):
-    class Meta:
-        model = Servicio
-        fields = ['cliente', 'vehiculo', 'tipo_servicio', 'descripcion']
-
-
-class DetalleServicioForm(forms.ModelForm):
-    tipo_servicio = forms.ModelChoiceField(
-        queryset=CatalogoServicio.objects.all(),
-        empty_label="Seleccione un servicio...",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    precio_final = forms.DecimalField(
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
-    )
-
-    class Meta:
-        model = DetalleServicio
-        fields = ['tipo_servicio', 'precio_final']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'tipo_servicio' in self.initial:
-            catalogo_servicio = CatalogoServicio.objects.get(pk=self.initial['tipo_servicio'])
-            self.fields['precio_final'].initial = catalogo_servicio.precio_base
-
-    def clean(self):
-        cleaned_data = super().clean()
-        tipo_servicio = cleaned_data.get('tipo_servicio')
-        if tipo_servicio:
-            cleaned_data['precio_final'] = tipo_servicio.precio_base
-        return cleaned_data
-
-
-# Formsets
-DetalleServicioFormSet = inlineformset_factory(
-    Servicio, DetalleServicio, form=DetalleServicioForm, extra=1, can_delete=True
-)
-
-
-class CotizacionForm(forms.ModelForm):
-    fecha_cotizacion = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        required=True
-    )
-
-    class Meta:
-        model = Cotizacion
-        fields = ['cliente', 'vehiculo', 'fecha_cotizacion', 'tipo_servicio', 'precio_final', 'descripcion']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['vehiculo'].queryset = Vehiculo.objects.none()
-        self.fields['vehiculo'].required = False
-        self.fields['vehiculo'].empty_label = "Vehículo no disponible"
-
-
-class DetalleCotizacionForm(forms.ModelForm):
-    class Meta:
-        model = DetalleCotizacion
-        exclude = ['subtotal']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'subtotal' in self.fields:
-            self.fields['subtotal'].widget.attrs['readonly'] = True
-
-
-DetalleCotizacionFormSet = inlineformset_factory(
-    Cotizacion, DetalleCotizacion, form=DetalleCotizacionForm, extra=1, can_delete=True
-)
-
-
+# 🔹 Formulario para Catálogo de Servicios
 class CatalogoServicioForm(forms.ModelForm):
     class Meta:
         model = CatalogoServicio
         fields = ['nombre_servicio', 'precio_base']
 
     def clean_nombre_servicio(self):
-        nombre = convertir_a_mayusculas(self.cleaned_data.get('nombre_servicio'))
-        validar_campo_unico(CatalogoServicio, 'nombre_servicio', nombre, self.instance)
-        return nombre
+        nombre = self.cleaned_data.get('nombre_servicio')
+        return convertir_a_mayusculas(nombre)
 
 
-from django import forms
-from .models import ModuloBolsaAire, Cliente, Marca, Modelo
-
-class ModuloBolsaAireForm(forms.ModelForm):
-    nueva_marca = forms.CharField(required=False, max_length=50, label="Nueva Marca")
-    nuevo_modelo = forms.CharField(required=False, max_length=50, label="Nuevo Modelo")
-
+# 🔹 Formulario para capturar un servicio
+class ServicioForm(forms.ModelForm):
     class Meta:
-        model = ModuloBolsaAire
-        fields = ['cliente', 'marca', 'modelo', 'anio', 'numero_parte', 'tipo_microprocesador', 'precio_reparacion']
-    
-    fecha_reparacion = forms.DateField(
-        widget=forms.TextInput(attrs={'readonly': 'readonly'}),  # 🔹 Solo lectura
-        initial=date.today,  # 🔹 Se inicializa con la fecha actual
-        input_formats=['%d-%m-%Y'],  # 🔹 Formato día-mes-año
-    )
+        model = Servicio
+        fields = ['cliente', 'vehiculo', 'tipo_servicio', 'precio_final']
+        widgets = {
+            'cliente': forms.Select(attrs={'class': 'form-control'}),
+            'vehiculo': forms.Select(attrs={'class': 'form-control'}),
+            'tipo_servicio': forms.Select(attrs={'class': 'form-control'}),
+            'precio_final': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+        }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Filtrar modelos según la marca seleccionada
-        self.fields['modelo'].queryset = Modelo.objects.none()
-
-        if 'marca' in self.data:
-            try:
-                marca_id = int(self.data.get('marca'))
-                self.fields['modelo'].queryset = Modelo.objects.filter(marca_id=marca_id).order_by('nombre')
-            except (ValueError, TypeError):
-                pass
+        super(ServicioForm, self).__init__(*args, **kwargs)
+        self.fields['tipo_servicio'].queryset = CatalogoServicio.objects.all()
+        self.fields['precio_final'].widget.attrs['readonly'] = True  # Se llenará automáticamente con el precio base
 
 
-
-class DetalleProductoForm(forms.ModelForm):
+# 🔹 Formulario para capturar datos de reparación de módulo
+class ModuloReparacionForm(forms.ModelForm):
     class Meta:
-        model = DetalleProducto
-        fields = ['producto', 'cantidad', 'precio_unitario']
+        model = ModuloReparacion
+        fields = ['marca', 'modelo', 'numero_parte', 'tipo_microprocesador', 'precio_reparacion']
+        widgets = {
+            'marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_parte': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo_microprocesador': forms.TextInput(attrs={'class': 'form-control'}),
+            'precio_reparacion': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'subtotal' in self.fields:
-            self.fields['subtotal'].widget.attrs['readonly'] = True
+
+# 🔹 Formulario para registrar ventas (Se generará automáticamente al registrar un servicio)
+class VentaForm(forms.ModelForm):
+    class Meta:
+        model = Venta
+        fields = ['cliente', 'servicio', 'monto_total']
+        widgets = {
+            'cliente': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'servicio': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'monto_total': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+        }
+
+
+# Formulario para Servicios
+class ServicioForm(forms.ModelForm):
+    class Meta:
+        model = Servicio
+        fields = ['cliente', 'vehiculo', 'tipo_servicio', 'fecha_servicio', 'precio_final']
+
+# Formulario para Catálogo de Servicios
+class CatalogoServicioForm(forms.ModelForm):
+    class Meta:
+        model = CatalogoServicio
+        fields = ['nombre_servicio', 'precio_base']
+
+# Formulario para Reparación de Módulo
+class ModuloReparacionForm(forms.ModelForm):
+    class Meta:
+        model = ModuloReparacion
+        fields = ['cliente', 'marca', 'modelo', 'numero_parte', 'tipo_microprocesador', 'fecha_reparacion', 'precio_reparacion']

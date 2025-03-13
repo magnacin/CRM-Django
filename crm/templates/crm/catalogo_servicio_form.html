@@ -1,16 +1,16 @@
-<!-- servicio_form.html -->
+<!-- catalogo_servicio_form.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>Registrar Servicio</title>
+    <title>Agregar Servicio al Catálogo</title>
 </head>
 <body>
-    <h2>Registrar Servicio</h2>
+    <h2>Agregar Servicio</h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Guardar Servicio</button>
     </form>
-    <a href="{% url 'listar_servicios' %}">Cancelar y regresar</a>
+    <a href="{% url 'listar_catalogo_servicios' %}">Cancelar y regresar</a>
 </body>
 </html>

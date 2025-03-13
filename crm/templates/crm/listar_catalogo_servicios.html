@@ -1,0 +1,25 @@
+<!-- listar_catalogo_servicios.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Catálogo de Servicios</title>
+</head>
+<body>
+    <h2>Catálogo de Servicios</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio Base</th>
+        </tr>
+        {% for servicio in catalogo_servicios %}
+        <tr>
+            <td>{{ servicio.id }}</td>
+            <td>{{ servicio.nombre_servicio }}</td>
+            <td>{{ servicio.precio_base }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'registrar_catalogo_servicio' %}">Agregar Nuevo Servicio</a>
+</body>
+</html>

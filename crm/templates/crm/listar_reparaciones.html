@@ -1,40 +1,35 @@
+<!-- listar_reparaciones.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>Reparaciones de Módulos</title>
+    <title>Lista de Reparaciones</title>
 </head>
 <body>
-    <h2>Lista de Reparaciones</h2>
+    <h2>Lista de Reparaciones de Módulos</h2>
     <table border="1">
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>Fecha</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Año</th>
-                <th>Número de Parte</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for reparacion in reparaciones %}
-            <tr>
-                <td>{{ reparacion.cliente }}</td>
-                <td>{{ reparacion.fecha_reparacion }}</td>
-                <td>{{ reparacion.marca }}</td>
-                <td>{{ reparacion.modelo }}</td>
-                <td>{{ reparacion.anio }}</td>
-                <td>{{ reparacion.numero_parte }}</td>
-                <td>
-                    <a href="{% url 'editar_reparacion' reparacion.id %}">Editar</a>
-                    <a href="{% url 'eliminar_reparacion' reparacion.id %}">Eliminar</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Número de Parte</th>
+            <th>Tipo de Memoria</th>
+            <th>Fecha</th>
+            <th>Precio</th>
+        </tr>
+        {% for reparacion in reparaciones %}
+        <tr>
+            <td>{{ reparacion.id }}</td>
+            <td>{{ reparacion.cliente }}</td>
+            <td>{{ reparacion.marca }}</td>
+            <td>{{ reparacion.modelo }}</td>
+            <td>{{ reparacion.numero_parte }}</td>
+            <td>{{ reparacion.tipo_microprocesador }}</td>
+            <td>{{ reparacion.fecha_reparacion }}</td>
+            <td>{{ reparacion.precio_reparacion }}</td>
+        </tr>
+        {% endfor %}
     </table>
-
     <a href="{% url 'registrar_reparacion' %}">Registrar Nueva Reparación</a>
 </body>
 </html>
