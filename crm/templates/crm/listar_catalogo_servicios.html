@@ -1,25 +1,36 @@
-<!-- listar_catalogo_servicios.html -->
+<!-- listar_catalogo_servicios.html - Se agrega botón para registrar nuevo servicio -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <title>Catálogo de Servicios</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { width: 80%; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        .button { background-color: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; }
+        .button:hover { background-color: #0056b3; }
+    </style>
 </head>
 <body>
-    <h2>Catálogo de Servicios</h2>
-    <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Precio Base</th>
-        </tr>
-        {% for servicio in catalogo_servicios %}
-        <tr>
-            <td>{{ servicio.id }}</td>
-            <td>{{ servicio.nombre_servicio }}</td>
-            <td>{{ servicio.precio_base }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <a href="{% url 'registrar_catalogo_servicio' %}">Agregar Nuevo Servicio</a>
+    <div class="container">
+        <h2>Catálogo de Servicios</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Nombre del Servicio</th>
+                <th>Precio Base</th>
+            </tr>
+            {% for servicio in catalogo_servicios %}
+            <tr>
+                <td>{{ servicio.id }}</td>
+                <td>{{ servicio.nombre_servicio }}</td>
+                <td>{{ servicio.precio_base }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'registrar_catalogo_servicio' %}" class="button">Agregar Nuevo Servicio</a>
+        <a href="{% url 'menu_principal' %}" class="button" style="background-color: grey;">Volver al Menú</a>
+    </div>
 </body>
 </html>

@@ -1,16 +1,26 @@
-<!-- servicio_form.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <title>Registrar Servicio</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .form-container { width: 50%; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        select, input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px; width: 100%; margin-top: 10px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .button { background-color: grey; color: white; padding: 10px; text-decoration: none; border-radius: 4px; display: inline-block; text-align: center; width: 100%; margin-top: 10px; }
+    </style>
 </head>
 <body>
-    <h2>Registrar Servicio</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar Servicio</button>
-    </form>
-    <a href="{% url 'listar_servicios' %}">Cancelar y regresar</a>
+    <div class="form-container">
+        <h2>Registrar Servicio</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar Servicio</button>
+        </form>
+        <a href="{% url 'listar_servicios' %}" class="button">Cancelar y regresar</a>
+    </div>
 </body>
 </html>

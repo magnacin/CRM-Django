@@ -1,35 +1,46 @@
-<!-- listar_reparaciones.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <title>Lista de Reparaciones</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; text-align: center; }
+        .container { background: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 90%; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #dc3545; color: white; }
+        a, button { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px; }
+        a:hover, button:hover { background-color: #c82333; }
+    </style>
 </head>
 <body>
-    <h2>Lista de Reparaciones de Módulos</h2>
-    <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Marca</th>
-            <th>Modelo</th>
-            <th>Número de Parte</th>
-            <th>Tipo de Memoria</th>
-            <th>Fecha</th>
-            <th>Precio</th>
-        </tr>
-        {% for reparacion in reparaciones %}
-        <tr>
-            <td>{{ reparacion.id }}</td>
-            <td>{{ reparacion.cliente }}</td>
-            <td>{{ reparacion.marca }}</td>
-            <td>{{ reparacion.modelo }}</td>
-            <td>{{ reparacion.numero_parte }}</td>
-            <td>{{ reparacion.tipo_microprocesador }}</td>
-            <td>{{ reparacion.fecha_reparacion }}</td>
-            <td>{{ reparacion.precio_reparacion }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <a href="{% url 'registrar_reparacion' %}">Registrar Nueva Reparación</a>
+    <div class="container">
+        <h2>Lista de Reparaciones de Módulos</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Número de Parte</th>
+                <th>Tipo de Memoria</th>
+                <th>Fecha</th>
+                <th>Precio</th>
+            </tr>
+            {% for reparacion in reparaciones %}
+            <tr>
+                <td>{{ reparacion.id }}</td>
+                <td>{{ reparacion.cliente }}</td>
+                <td>{{ reparacion.marca }}</td>
+                <td>{{ reparacion.modelo }}</td>
+                <td>{{ reparacion.numero_parte }}</td>
+                <td>{{ reparacion.tipo_microprocesador }}</td>
+                <td>{{ reparacion.fecha_reparacion }}</td>
+                <td>${{ reparacion.precio_reparacion }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'registrar_reparacion' %}">Registrar Nueva Reparación</a>
+        <a href="{% url 'menu_principal' %}">Volver al Menú</a>
+    </div>
 </body>
 </html>

@@ -1,16 +1,26 @@
-<!-- catalogo_servicio_form.html -->
+<!-- catalogo_servicio_form.html - Se mejora la presentación -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>Agregar Servicio al Catálogo</title>
+    <title>Agregar Servicio</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { width: 50%; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .button { background-color: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; text-align: center; }
+        .button:hover { background-color: #0056b3; }
+    </style>
 </head>
 <body>
-    <h2>Agregar Servicio</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar Servicio</button>
-    </form>
-    <a href="{% url 'listar_catalogo_servicios' %}">Cancelar y regresar</a>
+    <div class="container">
+        <h2>Agregar Nuevo Servicio</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="button">Guardar Servicio</button>
+        </form>
+        <a href="{% url 'listar_catalogo_servicios' %}" class="button" style="background-color: grey;">Cancelar</a>
+    </div>
 </body>
 </html>

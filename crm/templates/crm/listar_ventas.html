@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Lista de Ventas</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; text-align: center; }
+        .container { background: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 90%; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #28a745; color: white; }
+        td.fecha { width: 15%; } /* Reducir el tamaño de la fecha */
+        a, button { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+        a:hover, button:hover { background-color: #1e7e34; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Lista de Ventas</h2>
+        <table>
+            <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Tipo de Servicio</th>
+                <th>Monto Total</th>
+            </tr>
+            {% for venta in ventas %}
+            <tr>
+                <td class="fecha">{{ venta.fecha_venta }}</td>
+                <td>{{ venta.cliente }}</td>
+                <td>{{ venta.servicio.tipo_servicio }}</td> <!-- Agregar el tipo de servicio -->
+                <td>${{ venta.monto_total }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'menu_principal' %}">Volver al Menú</a>
+    </div>
+</body>
+</html>

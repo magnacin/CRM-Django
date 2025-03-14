@@ -4,15 +4,17 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.db.models import Q
 from datetime import date
-from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion
+from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion, Venta
 from .forms import ClienteForm, VehiculoForm, ServicioForm, CatalogoServicioForm, ModuloReparacionForm
 
+# Menu Principal
+def menu_principal(request):
+    return render(request, 'crm/menu.html')
 
 # 🔹 Vistas para Clientes
 def listar_clientes(request):
     clientes = Cliente.objects.all()
     return render(request, 'crm/listar_clientes.html', {'clientes': clientes})
-
 
 def registrar_cliente(request):
     if request.method == 'POST':
@@ -23,7 +25,6 @@ def registrar_cliente(request):
     else:
         form = ClienteForm()
     return render(request, 'crm/cliente_form.html', {'form': form})
-
 
 def editar_cliente(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
@@ -36,7 +37,6 @@ def editar_cliente(request, pk):
         form = ClienteForm(instance=cliente)
     return render(request, 'crm/cliente_form.html', {'form': form})
 
-
 def eliminar_cliente(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
@@ -44,12 +44,10 @@ def eliminar_cliente(request, pk):
         return redirect('listar_clientes')
     return render(request, 'crm/confirmar_eliminar.html', {'objeto': cliente})
 
-
 # 🔹 Vistas para Vehículos
 def listar_vehiculos(request):
     vehiculos = Vehiculo.objects.all()
     return render(request, 'crm/listar_vehiculos.html', {'vehiculos': vehiculos})
-
 
 def registrar_vehiculo(request):
     if request.method == 'POST':
@@ -60,7 +58,6 @@ def registrar_vehiculo(request):
     else:
         form = VehiculoForm()
     return render(request, 'crm/vehiculo_form.html', {'form': form})
-
 
 def editar_vehiculo(request, pk):
     vehiculo = get_object_or_404(Vehiculo, pk=pk)
@@ -73,7 +70,6 @@ def editar_vehiculo(request, pk):
         form = VehiculoForm(instance=vehiculo)
     return render(request, 'crm/vehiculo_form.html', {'form': form, 'vehiculo': vehiculo})
 
-
 def eliminar_vehiculo(request, pk):
     vehiculo = get_object_or_404(Vehiculo, pk=pk)
     if request.method == 'POST':
@@ -81,35 +77,30 @@ def eliminar_vehiculo(request, pk):
         return redirect('listar_vehiculos')
     return render(request, 'crm/confirmar_eliminar.html', {'objeto': vehiculo})
 
-
 # 🔹 Vista para obtener vehículos por cliente (para AJAX)
 def obtener_vehiculos_por_cliente(request, cliente_id):
     vehiculos = Vehiculo.objects.filter(cliente_id=cliente_id).values('id', 'marca', 'modelo', 'anio')
     return JsonResponse(list(vehiculos), safe=False)
-
 
 # 🔹 Vistas para Catálogo de Servicios
 def listar_servicios(request):
     servicios = CatalogoServicio.objects.all()
     return render(request, 'crm/listar_servicios.html', {'servicios': servicios})
 
-
 def registrar_servicio(request):
-    if request.method == 'POST':
-        form = CatalogoServicioForm(request.POST)
+    if request.method == "POST":
+        form = ServicioForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('listar_servicios')
     else:
-        form = CatalogoServicioForm()
+        form = ServicioForm()
+
     return render(request, 'crm/servicio_form.html', {'form': form})
-
-
 # 🔹 Vistas para Registro de Servicios
 def listar_servicios_registrados(request):
     servicios = Servicio.objects.all()
     return render(request, 'crm/listar_servicios_registrados.html', {'servicios': servicios})
-
 
 def registrar_servicio_cliente(request):
     if request.method == 'POST':
@@ -120,7 +111,6 @@ def registrar_servicio_cliente(request):
     else:
         form = ServicioForm()
     return render(request, 'crm/servicio_cliente_form.html', {'form': form})
-
 
 # 🔹 Vista para Registrar una Reparación de Módulo
 def registrar_reparacion(request):
@@ -133,12 +123,10 @@ def registrar_reparacion(request):
         form = ModuloReparacionForm()
     return render(request, 'crm/modulo_form.html', {'form': form})
 
-
 # 🔹 Vistas para Ventas
 def listar_ventas(request):
     ventas = Venta.objects.all()
     return render(request, 'crm/listar_ventas.html', {'ventas': ventas})
-
 
 def registrar_venta(request):
     if request.method == 'POST':
@@ -198,3 +186,7 @@ def registrar_reparacion(request):
         form = ModuloReparacionForm()
     return render(request, 'crm/reparacion_form.html', {'form': form})
 
+# Vista Ventas
+def listar_ventas(request):
+    ventas = Venta.objects.all()
+    return render(request, 'crm/listar_ventas.html', {'ventas': ventas})
