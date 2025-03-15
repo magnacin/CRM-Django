@@ -70,16 +70,18 @@ class ModuloReparacion(models.Model):
 
 # 🔹 Modelo Venta (Se crea automáticamente al registrar un servicio)
 class Venta(models.Model):
-    fecha_venta = models.DateField(auto_now_add=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE)
-    monto_total = models.DecimalField(max_digits=12, decimal_places=2)
-
-    def __str__(self):
-        return f"Venta {self.id} - {self.fecha_venta}"
+    fecha_venta = models.DateField(auto_now_add=True)  # Tomar la fecha de registro del servicio
+    monto_total = models.DecimalField(max_digits=10, decimal_places=2)
 
     def save(self, *args, **kwargs):
-        """Calcula automáticamente el monto total basado en el servicio."""
-        self.monto_total = self.servicio.precio_final
+        """ Al guardar una venta, tomar los datos desde Servicio """
+        if self.servicio:
+            self.fecha_venta = self.servicio.fecha_servicio  # Fecha de servicio
+            self.monto_total = self.servicio.precio_final  # Precio del servicio
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Venta de {self.servicio.tipo_servicio} - {self.monto_total} el {self.fecha_venta}"
 

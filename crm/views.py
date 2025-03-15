@@ -123,21 +123,6 @@ def registrar_reparacion(request):
         form = ModuloReparacionForm()
     return render(request, 'crm/modulo_form.html', {'form': form})
 
-# 🔹 Vistas para Ventas
-def listar_ventas(request):
-    ventas = Venta.objects.all()
-    return render(request, 'crm/listar_ventas.html', {'ventas': ventas})
-
-def registrar_venta(request):
-    if request.method == 'POST':
-        form = VentaForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_ventas')
-    else:
-        form = VentaForm()
-    return render(request, 'crm/venta_form.html', {'form': form})
-
 # Listar Servicios
 def listar_servicios(request):
     servicios = Servicio.objects.all()
@@ -177,16 +162,33 @@ def listar_reparaciones(request):
 
 # Registrar Reparación de Módulo
 def registrar_reparacion(request):
-    if request.method == 'POST':
+    cliente_id = request.GET.get('cliente', None)
+    cliente = Cliente.objects.filter(id=cliente_id).first() if cliente_id else None
+
+    if request.method == "POST":
         form = ModuloReparacionForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('listar_reparaciones')
+            reparacion = form.save()  # Guardar la reparación en la BD
+
+            # 🔹 Obtener el servicio "Reparacion Modulos Airbag" del catálogo
+            tipo_servicio = CatalogoServicio.objects.filter(nombre_servicio="Reparacion Modulos Airbag").first()
+
+            # 🔹 Crear el registro de servicio automáticamente
+            if tipo_servicio:
+                Servicio.objects.create(
+                    cliente=reparacion.cliente,
+                    vehiculo=None,  # No se asocia un vehículo
+                    tipo_servicio=tipo_servicio,
+                    precio_final=reparacion.precio_reparacion
+                )
+
+            return redirect('listar_servicios')  # Redirigir a lista de servicios
     else:
-        form = ModuloReparacionForm()
+        form = ModuloReparacionForm(initial={'cliente': cliente})
+
     return render(request, 'crm/reparacion_form.html', {'form': form})
 
 # Vista Ventas
 def listar_ventas(request):
-    ventas = Venta.objects.all()
-    return render(request, 'crm/listar_ventas.html', {'ventas': ventas})
+    ventas = Servicio.objects.all()
+    return render(request, 'crm/listar_ventas.html', {'ventas': ventas })

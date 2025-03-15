@@ -25,10 +25,10 @@
             </tr>
             {% for venta in ventas %}
             <tr>
-                <td class="fecha">{{ venta.fecha_venta }}</td>
+                <td>{{ venta.fecha_servicio }}</td>
                 <td>{{ venta.cliente }}</td>
-                <td>{{ venta.servicio.tipo_servicio }}</td> <!-- Agregar el tipo de servicio -->
-                <td>${{ venta.monto_total }}</td>
+                <td>{{ venta.tipo_servicio }}</td> 
+                <td>{{ venta.precio_final }}</td>
             </tr>
             {% endfor %}
         </table>

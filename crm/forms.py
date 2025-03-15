@@ -114,19 +114,6 @@ class ModuloReparacionForm(forms.ModelForm):
             'precio_reparacion': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
-
-# 🔹 Formulario para registrar ventas (Se generará automáticamente al registrar un servicio)
-class VentaForm(forms.ModelForm):
-    class Meta:
-        model = Venta
-        fields = ['cliente', 'servicio', 'monto_total']
-        widgets = {
-            'cliente': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'servicio': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'monto_total': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-        }
-
-
 # Formulario para Servicios
 class ServicioForm(forms.ModelForm):
     class Meta:
