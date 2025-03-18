@@ -31,5 +31,7 @@ urlpatterns = [
     path('reparaciones/nuevo/', views.registrar_reparacion, name='registrar_reparacion'),
     # Ventas
     path('ventas/', views.listar_ventas, name='listar_ventas'),
+    path('reportes/ventas/', views.reporte_ventas, name='reporte_ventas'),
+
 
 ]

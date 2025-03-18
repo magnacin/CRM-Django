@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Sum
 from datetime import date
 from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion, Venta
 from .forms import ClienteForm, VehiculoForm, ServicioForm, CatalogoServicioForm, ModuloReparacionForm
@@ -192,3 +192,28 @@ def registrar_reparacion(request):
 def listar_ventas(request):
     ventas = Servicio.objects.all()
     return render(request, 'crm/listar_ventas.html', {'ventas': ventas })
+
+# Reporte de Ventas
+
+from django.http import JsonResponse
+import json
+from django.http import JsonResponse
+import json
+
+def reporte_ventas(request):
+    clientes = Cliente.objects.all()
+
+    ventas_por_servicio = Servicio.objects.values('tipo_servicio__nombre_servicio') \
+        .annotate(total=Sum('precio_final'))
+
+    # ✅ Convertir Decimal a float antes de pasarlo a JSON
+    ventas_por_servicio = [
+        {"tipo_servicio__nombre_servicio": item["tipo_servicio__nombre_servicio"], "total": float(item["total"])}
+        for item in ventas_por_servicio
+    ]
+
+    return render(request, 'crm/reporte_ventas.html', {
+        'clientes': clientes,
+        'ventas_por_servicio_json': json.dumps(ventas_por_servicio)  # ✅ JSON limpio y válido
+    })
+
