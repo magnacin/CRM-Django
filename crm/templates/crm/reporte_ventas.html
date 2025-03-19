@@ -10,7 +10,7 @@
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
         .button { background-color: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; }
         .button:hover { background-color: #0056b3; }
-        canvas { margin-top: 20px; display: block; }
+        canvas { margin-top: 20px; display: block; max-width: 600px; height: 400px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -18,16 +18,14 @@
     <div class="container">
         <h2>Reporte de Ventas por Cliente</h2>
 
-        <!-- Dropdown para seleccionar cliente -->
         <label for="clienteSelect">Seleccionar Cliente:</label>
         <select id="clienteSelect">
             <option value="">Todos</option>
             {% for cliente in clientes %}
-                <option value="{{ cliente.id }}">{{ cliente.nombre }} {{ cliente.apellido }}</option>
+            <option value="{{ cliente.id }}">{{ cliente.nombre }} {{ cliente.apellido }}</option>
             {% endfor %}
         </select>
-        
-        <!-- Tabla de ventas por cliente -->
+
         <table id="ventasCliente">
             <tr>
                 <th>Fecha</th>
@@ -46,62 +44,69 @@
         </table>
 
         <h2>Reporte de Ventas por Servicio</h2>
-        
-        <!-- Tabla de resumen de ventas por servicio -->
-        <table id="ventasServicio">
-            <tr>
-                <th>Servicio</th>
-                <th>Cantidad Vendida</th>
-                <th>Total Generado</th>
-            </tr>
-            {% for servicio in resumen_servicios %}
-            <tr>
-                <td>{{ servicio.tipo_servicio__nombre_servicio }}</td>
-                <td>{{ servicio.cantidad }}</td>
-                <td>${{ servicio.total }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-
-        <!-- Gráfica de ventas por servicio -->
         <canvas id="graficoVentasServicio" style="max-width: 600px; max-height: 400px;"></canvas>
 
 
         <a href="{% url 'menu_principal' %}" class="button">Volver al Menú</a>
     </div>
-    
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            var clienteSelect = document.getElementById("clienteSelect");
             var ctx = document.getElementById("graficoVentasServicio").getContext("2d");
-    
-            // ✅ Recibir datos como JSON válido desde Django
+            var chartInstance;
+
             var ventasData = JSON.parse('{{ ventas_por_servicio_json|escapejs }}');
-    
-            // ✅ Extraer datos correctamente
-            var dataLabels = ventasData.map(item => item.tipo_servicio__nombre_servicio);
-            var dataValues = ventasData.map(item => parseFloat(item.total));
-    
-            console.log("✅ Datos procesados correctamente:", dataLabels, dataValues);
-    
-            new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: dataLabels,
-                    datasets: [{
-                        label: "Total Vendido ($)",
-                        data: dataValues,
-                        backgroundColor: "#007bff"
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
+
+            function actualizarGrafica(clienteId = "") {
+                fetch(`/crm/reportes/ventas/datos/?cliente_id=${clienteId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        var dataLabels = [];
+                        var dataValues = [];
+
+                        data.forEach(servicio => {
+                            dataLabels.push(servicio.tipo_servicio__nombre_servicio);
+                            dataValues.push(servicio.total);
+                        });
+
+                        if (chartInstance) {
+                            chartInstance.destroy();
+                        }
+
+                        chartInstance = new Chart(ctx, {
+                            type: "bar",
+                            data: {
+                                labels: dataLabels,
+                                datasets: [{
+                                    label: "Total Vendido ($)",
+                                    data: dataValues,
+                                    backgroundColor: "#007bff"
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        suggestedMax: Math.max(...dataValues) + 100,
+                                        ticks: { stepSize: 500 }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error("❌ Error al cargar datos:", error));
+            }
+
+            actualizarGrafica();
+
+            clienteSelect.addEventListener("change", function () {
+                var clienteId = clienteSelect.value;
+                actualizarGrafica(clienteId);
             });
         });
-    </script>    
+    </script>
 </body>
 </html>

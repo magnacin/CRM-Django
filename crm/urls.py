@@ -32,6 +32,8 @@ urlpatterns = [
     # Ventas
     path('ventas/', views.listar_ventas, name='listar_ventas'),
     path('reportes/ventas/', views.reporte_ventas, name='reporte_ventas'),
+    path('reportes/ventas/', views.reporte_ventas, name='reporte_ventas'),
+    path('reportes/ventas/datos/', views.ventas_por_cliente, name='ventas_por_cliente'),
 
 
 ]

@@ -197,8 +197,12 @@ def listar_ventas(request):
 
 from django.http import JsonResponse
 import json
+
+from django.shortcuts import render
 from django.http import JsonResponse
+from django.db.models import Sum
 import json
+from .models import Cliente, Servicio
 
 def reporte_ventas(request):
     clientes = Cliente.objects.all()
@@ -214,6 +218,18 @@ def reporte_ventas(request):
 
     return render(request, 'crm/reporte_ventas.html', {
         'clientes': clientes,
-        'ventas_por_servicio_json': json.dumps(ventas_por_servicio)  # ✅ JSON limpio y válido
+        'ventas_por_servicio_json': json.dumps(ventas_por_servicio)
     })
 
+# Nueva vista para filtrar ventas por cliente
+def ventas_por_cliente(request):
+    cliente_id = request.GET.get('cliente_id')
+    if cliente_id:
+        ventas = Servicio.objects.filter(cliente_id=cliente_id).values('tipo_servicio__nombre_servicio') \
+            .annotate(total=Sum('precio_final'))
+    else:
+        ventas = Servicio.objects.values('tipo_servicio__nombre_servicio') \
+            .annotate(total=Sum('precio_final'))
+
+    ventas = [{"tipo_servicio__nombre_servicio": v["tipo_servicio__nombre_servicio"], "total": float(v["total"])} for v in ventas]
+    return JsonResponse(ventas, safe=False)
