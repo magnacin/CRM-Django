@@ -6,46 +6,36 @@
         body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
         .container { width: 80%; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h2 { text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        .button { background-color: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; }
+        label { font-weight: bold; margin-top: 10px; display: block; }
+        select, input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .button { background-color: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; cursor: pointer; width: 100%; text-align: center; border: none; }
         .button:hover { background-color: #0056b3; }
-        canvas { margin-top: 20px; display: block; max-width: 600px; height: 400px; }
+        canvas { margin-top: 20px; display: block; max-width: 600px; max-height: 400px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
-        <h2>Reporte de Ventas por Cliente</h2>
+        <h2>Reporte de Ventas</h2>
 
         <label for="clienteSelect">Seleccionar Cliente:</label>
         <select id="clienteSelect">
             <option value="">Todos</option>
             {% for cliente in clientes %}
-            <option value="{{ cliente.id }}">{{ cliente.nombre }} {{ cliente.apellido }}</option>
+                <option value="{{ cliente.id }}">{{ cliente.nombre }} {{ cliente.apellido }}</option>
             {% endfor %}
         </select>
 
-        <table id="ventasCliente">
-            <tr>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Servicio</th>
-                <th>Monto</th>
-            </tr>
-            {% for venta in ventas %}
-            <tr class="venta" data-cliente="{{ venta.cliente.id }}">
-                <td>{{ venta.fecha_servicio }}</td>
-                <td>{{ venta.cliente.nombre }} {{ venta.cliente.apellido }}</td>
-                <td>{{ venta.tipo_servicio.nombre_servicio }}</td>
-                <td>${{ venta.precio_final }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+        <label for="fechaInicio">Fecha de Inicio:</label>
+        <input type="month" id="fechaInicio">
+
+        <label for="fechaFin">Fecha Final:</label>
+        <input type="month" id="fechaFin">
+
+        <button id="filtrarBtn" class="button">Filtrar</button>
 
         <h2>Reporte de Ventas por Servicio</h2>
-        <canvas id="graficoVentasServicio" style="max-width: 600px; max-height: 400px;"></canvas>
-
+        <canvas id="graficoVentasServicio"></canvas>
 
         <a href="{% url 'menu_principal' %}" class="button">Volver al Menú</a>
     </div>
@@ -53,21 +43,46 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var clienteSelect = document.getElementById("clienteSelect");
+            var fechaInicio = document.getElementById("fechaInicio");
+            var fechaFin = document.getElementById("fechaFin");
+            var filtrarBtn = document.getElementById("filtrarBtn");
             var ctx = document.getElementById("graficoVentasServicio").getContext("2d");
             var chartInstance;
 
-            var ventasData = JSON.parse('{{ ventas_por_servicio_json|escapejs }}');
+            function actualizarGrafica() {
+                var clienteId = clienteSelect.value;
+                var fechaInicioVal = fechaInicio.value;
+                var fechaFinVal = fechaFin.value;
 
-            function actualizarGrafica(clienteId = "") {
-                fetch(`/crm/reportes/ventas/datos/?cliente_id=${clienteId}`)
-                    .then(response => response.json())
+                if (fechaInicioVal) {
+                    fechaInicioVal += "-01"; // Primer día del mes
+                }
+                if (fechaFinVal) {
+                    fechaFinVal += "-28"; // Asumimos 28 como día seguro del mes
+                }
+
+                var url = `/crm/reportes/ventas/datos/?cliente_id=${clienteId}`;
+                if (fechaInicioVal) url += `&fecha_inicio=${fechaInicioVal}`;
+                if (fechaFinVal) url += `&fecha_fin=${fechaFinVal}`;
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Error en la respuesta del servidor.");
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         var dataLabels = [];
                         var dataValues = [];
 
-                        data.forEach(servicio => {
-                            dataLabels.push(servicio.tipo_servicio__nombre_servicio);
-                            dataValues.push(servicio.total);
+                        if (!Array.isArray(data)) {
+                            throw new Error("Respuesta inválida del servidor");
+                        }
+
+                        data.forEach(item => {
+                            dataLabels.push(item.tipo_servicio__nombre_servicio);
+                            dataValues.push(item.total);
                         });
 
                         if (chartInstance) {
@@ -90,22 +105,24 @@
                                 scales: {
                                     y: {
                                         beginAtZero: true,
-                                        suggestedMax: Math.max(...dataValues) + 100,
+                                        suggestedMax: Math.max(...dataValues, 500),
                                         ticks: { stepSize: 500 }
                                     }
                                 }
                             }
                         });
                     })
-                    .catch(error => console.error("❌ Error al cargar datos:", error));
+                    .catch(error => {
+                        console.error("❌ Error al cargar datos:", error);
+                    });
             }
 
+            // Inicial al cargar
             actualizarGrafica();
 
-            clienteSelect.addEventListener("change", function () {
-                var clienteId = clienteSelect.value;
-                actualizarGrafica(clienteId);
-            });
+            // Filtros
+            clienteSelect.addEventListener("change", actualizarGrafica);
+            filtrarBtn.addEventListener("click", actualizarGrafica);
         });
     </script>
 </body>

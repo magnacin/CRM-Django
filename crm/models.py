@@ -85,3 +85,37 @@ class Venta(models.Model):
     def __str__(self):
         return f"Venta de {self.servicio.tipo_servicio} - {self.monto_total} el {self.fecha_venta}"
 
+class Cotizacion(models.Model):
+    cliente = models.ForeignKey('Cliente', on_delete=models.CASCADE)
+    fecha = models.DateField(default=date.today)
+    numero_cotizacion = models.PositiveIntegerField(unique=True)
+
+    # Nuevos campos reemplazando 'vehiculo'
+    marca = models.CharField(max_length=50)
+    modelo = models.CharField(max_length=50)
+    anio = models.IntegerField()
+
+    total_general = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def calcular_total(self):
+        total = sum(detalle.precio_total for detalle in self.detallecotizacion_set.all())
+        self.total_general = total
+        self.save()
+
+    def __str__(self):
+        return f"Cotización #{self.numero_cotizacion} - {self.cliente}"
+
+class DetalleCotizacion(models.Model):
+    cotizacion = models.ForeignKey('Cotizacion', on_delete=models.CASCADE)
+    tipo_servicio = models.ForeignKey('CatalogoServicio', on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_total = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+
+    def save(self, *args, **kwargs):
+        self.precio_total = self.cantidad * self.precio_unitario
+        super().save(*args, **kwargs)
+        self.cotizacion.calcular_total()
+
+    def __str__(self):
+        return f"{self.tipo_servicio} x {self.cantidad} (${self.precio_total})"

@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 import re
 from django import forms
-from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion, Venta
+from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion, Venta, Cotizacion
 
 # Funciones auxiliares reutilizables
 def convertir_a_mayusculas(valor):
@@ -131,3 +131,41 @@ class ModuloReparacionForm(forms.ModelForm):
     class Meta:
         model = ModuloReparacion
         fields = ['cliente', 'marca', 'modelo', 'numero_parte', 'tipo_microprocesador', 'fecha_reparacion', 'precio_reparacion']
+
+class CotizacionForm(forms.ModelForm):
+    class Meta:
+        model = Cotizacion
+        fields = ['cliente', 'fecha', 'marca', 'modelo', 'anio']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Obtener valores únicos existentes
+        marcas = Cotizacion.objects.values_list('marca', flat=True).distinct()
+        modelos = Cotizacion.objects.values_list('modelo', flat=True).distinct()
+        anios = Cotizacion.objects.values_list('anio', flat=True).distinct()
+
+        self.fields['marca'].widget = forms.Select(choices=[(m, m) for m in marcas if m] + [('', 'Nuevo...')])
+        self.fields['modelo'].widget = forms.Select(choices=[(m, m) for m in modelos if m] + [('', 'Nuevo...')])
+        self.fields['anio'].widget = forms.Select(choices=[(a, a) for a in anios if a] + [('', 'Nuevo...')])
+
+from django.forms import inlineformset_factory
+from .models import Cotizacion, DetalleCotizacion
+
+class DetalleCotizacionForm(forms.ModelForm):
+    class Meta:
+        model = DetalleCotizacion
+        fields = ['tipo_servicio', 'cantidad', 'precio_unitario']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cantidad'].widget.attrs.update({'class': 'cantidad-input'})
+        self.fields['precio_unitario'].widget.attrs.update({'class': 'precio-input'})
+
+DetalleCotizacionFormSet = inlineformset_factory(
+    Cotizacion,
+    DetalleCotizacion,
+    form=DetalleCotizacionForm,
+    extra=1,
+    can_delete=True
+)

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Lista de Cotizaciones</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; text-align: center; }
+        .container { background: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 90%; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #dc3545; color: white; }
+        a, button { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px; }
+        a:hover, button:hover { background-color: #c82333; }
+        form { display: inline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Lista de Cotizaciones</h2>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Año</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+            {% for c in cotizaciones %}
+            <tr>
+                <td>{{ c.numero_cotizacion }}</td>
+                <td>{{ c.cliente }}</td>
+                <td>{{ c.marca }}</td>
+                <td>{{ c.modelo }}</td>
+                <td>{{ c.anio }}</td>
+                <td>{{ c.fecha|date:"d/m/Y" }}</td>
+                <td>${{ c.total_general }}</td>
+                <td>
+                    <a href="{% url 'editar_cotizacion' c.id %}">Editar</a>
+                    <form method="post" action="{% url 'eliminar_cotizacion' c.id %}" onsubmit="return confirm('¿Eliminar esta cotización?');">
+                        {% csrf_token %}
+                        <button type="submit">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">No hay cotizaciones registradas.</td></tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'registrar_cotizacion' %}">Registrar Nueva Cotización</a>
+        <a href="{% url 'menu_principal' %}">Volver al Menú</a>
+    </div>
+</body>
+</html>

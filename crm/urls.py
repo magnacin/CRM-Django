@@ -34,6 +34,14 @@ urlpatterns = [
     path('reportes/ventas/', views.reporte_ventas, name='reporte_ventas'),
     path('reportes/ventas/', views.reporte_ventas, name='reporte_ventas'),
     path('reportes/ventas/datos/', views.ventas_por_cliente, name='ventas_por_cliente'),
+    path('reportes/ventas/datos/', views.reporte_ventas_datos, name='reporte_ventas_datos'),
+
+    # Cotizaciones
+    path('cotizaciones/', views.listar_cotizaciones, name='listar_cotizaciones'),
+    path('cotizaciones/nuevo/', views.registrar_cotizacion, name='registrar_cotizacion'),
+    path('cotizaciones/editar/<int:pk>/', views.editar_cotizacion, name='editar_cotizacion'),
+    path('cotizaciones/eliminar/<int:pk>/', views.eliminar_cotizacion, name='eliminar_cotizacion'),
+
 
 
 ]

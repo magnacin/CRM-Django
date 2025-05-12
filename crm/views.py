@@ -3,9 +3,12 @@ from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.db.models import Q, Sum
-from datetime import date
+from datetime import date, datetime
 from .models import Cliente, Vehiculo, Servicio, CatalogoServicio, ModuloReparacion, Venta
 from .forms import ClienteForm, VehiculoForm, ServicioForm, CatalogoServicioForm, ModuloReparacionForm
+import json
+from django.http import JsonResponse
+
 
 # Menu Principal
 def menu_principal(request):
@@ -195,31 +198,57 @@ def listar_ventas(request):
 
 # Reporte de Ventas
 
-from django.http import JsonResponse
-import json
-
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.db.models import Sum
-import json
-from .models import Cliente, Servicio
 
 def reporte_ventas(request):
     clientes = Cliente.objects.all()
-
     ventas_por_servicio = Servicio.objects.values('tipo_servicio__nombre_servicio') \
         .annotate(total=Sum('precio_final'))
-
-    # ✅ Convertir Decimal a float antes de pasarlo a JSON
     ventas_por_servicio = [
         {"tipo_servicio__nombre_servicio": item["tipo_servicio__nombre_servicio"], "total": float(item["total"])}
         for item in ventas_por_servicio
     ]
-
     return render(request, 'crm/reporte_ventas.html', {
         'clientes': clientes,
         'ventas_por_servicio_json': json.dumps(ventas_por_servicio)
     })
+
+def reporte_ventas_datos(request):
+    cliente_id = request.GET.get("cliente_id")
+    fecha_inicio = request.GET.get("fecha_inicio")
+    fecha_fin = request.GET.get("fecha_fin")
+
+    servicios = Servicio.objects.all()
+
+    # ✅ Filtrar por cliente si se proporcionó
+    if cliente_id:
+        servicios = servicios.filter(cliente_id=cliente_id)
+
+    # ✅ Validar fechas y aplicar filtros
+    try:
+        if fecha_inicio:
+            fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            servicios = servicios.filter(fecha_servicio__gte=fecha_inicio)
+        if fecha_fin:
+            fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+            servicios = servicios.filter(fecha_servicio__lte=fecha_fin)
+    except Exception as e:
+        return JsonResponse({"error": f"Formato de fecha inválido: {str(e)}"}, status=400)
+
+    # ✅ Agrupar y sumar totales
+    resumen = servicios.values("tipo_servicio__nombre_servicio") \
+        .annotate(total=Sum("precio_final"))
+
+    # ✅ Convertir a JSON serializable
+    datos = []
+    for r in resumen:
+        datos.append({
+            "tipo_servicio__nombre_servicio": r["tipo_servicio__nombre_servicio"],
+            "total": float(r["total"]) if r["total"] else 0
+        })
+
+    return JsonResponse(datos, safe=False)
+
+
 
 # Nueva vista para filtrar ventas por cliente
 def ventas_por_cliente(request):
@@ -233,3 +262,101 @@ def ventas_por_cliente(request):
 
     ventas = [{"tipo_servicio__nombre_servicio": v["tipo_servicio__nombre_servicio"], "total": float(v["total"])} for v in ventas]
     return JsonResponse(ventas, safe=False)
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Max
+from .models import Cotizacion, DetalleCotizacion
+from .forms import CotizacionForm,DetalleCotizacionFormSet
+from datetime import date
+
+def listar_cotizaciones(request):
+    cotizaciones = Cotizacion.objects.all().order_by('-fecha', '-numero_cotizacion')
+    return render(request, 'crm/listar_cotizaciones.html', {'cotizaciones': cotizaciones})
+
+def listar_cotizaciones(request):
+    cotizaciones = Cotizacion.objects.all().order_by('-fecha', '-numero_cotizacion')
+    return render(request, 'crm/listar_cotizaciones.html', {'cotizaciones': cotizaciones})
+
+
+def registrar_cotizacion(request):
+    from django.db.models import Max
+    ultimo = Cotizacion.objects.aggregate(Max('numero_cotizacion'))['numero_cotizacion__max'] or 0
+    numero_nuevo = ultimo + 1
+
+    marcas = Cotizacion.objects.values_list('marca', flat=True).distinct()
+    modelos = Cotizacion.objects.values_list('modelo', flat=True).distinct()
+    anios = Cotizacion.objects.values_list('anio', flat=True).distinct()
+    servicios = CatalogoServicio.objects.all()  # ✅ para el select dinámico
+
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST)
+        formset = DetalleCotizacionFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            cotizacion = form.save(commit=False)
+            cotizacion.numero_cotizacion = numero_nuevo
+            cotizacion.marca = request.POST.get('marca')
+            cotizacion.modelo = request.POST.get('modelo')
+            cotizacion.anio = request.POST.get('anio')
+            cotizacion.save()
+
+            formset.instance = cotizacion
+            formset.save()
+            return redirect('listar_cotizaciones')
+    else:
+        form = CotizacionForm()
+        formset = DetalleCotizacionFormSet()
+
+    return render(request, 'crm/cotizacion_form.html', {
+        'form': form,
+        'formset': formset,
+        'numero_cotizacion': numero_nuevo,
+        'marcas': marcas,
+        'modelos': modelos,
+        'anios': anios,
+        'servicios': servicios  # ✅ pasa al template
+    })
+
+
+
+def editar_cotizacion(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    marcas = Cotizacion.objects.values_list('marca', flat=True).distinct()
+    modelos = Cotizacion.objects.values_list('modelo', flat=True).distinct()
+    anios = Cotizacion.objects.values_list('anio', flat=True).distinct()
+    servicios = CatalogoServicio.objects.all()  # ✅ importante
+
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST, instance=cotizacion)
+        formset = DetalleCotizacionFormSet(request.POST, instance=cotizacion)
+
+        if form.is_valid() and formset.is_valid():
+            cotizacion = form.save(commit=False)
+            cotizacion.marca = request.POST.get('marca')
+            cotizacion.modelo = request.POST.get('modelo')
+            cotizacion.anio = request.POST.get('anio')
+            cotizacion.save()
+            formset.save()
+            return redirect('listar_cotizaciones')
+    else:
+        form = CotizacionForm(instance=cotizacion)
+        formset = DetalleCotizacionFormSet(instance=cotizacion)
+
+    return render(request, 'crm/cotizacion_form.html', {
+        'form': form,
+        'formset': formset,
+        'numero_cotizacion': cotizacion.numero_cotizacion,
+        'marcas': marcas,
+        'modelos': modelos,
+        'anios': anios,
+        'servicios': servicios  # ✅ para autocompletar dinámico
+    })
+
+
+
+def eliminar_cotizacion(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    if request.method == 'POST':
+        cotizacion.delete()
+        return redirect('listar_cotizaciones')
+    return render(request, 'crm/confirmar_eliminar.html', {'obj': cotizacion})
