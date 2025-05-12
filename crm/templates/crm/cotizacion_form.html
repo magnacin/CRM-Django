@@ -18,158 +18,173 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>{% if form.instance.pk %}Editar{% else %}Registrar{% endif %} Cotización</h2>
+<div class="container">
+    <h2>{% if form.instance.pk %}Editar{% else %}Registrar{% endif %} Cotización</h2>
 
-        {% if form.instance.pk %}
-        <p style="color: #555; font-size: 0.95em;">
-            Puedes editar los servicios actuales o agregar más con el botón inferior.
+    {% if form.instance.pk %}
+    <p style="color: #555; font-size: 0.95em;">
+        Puedes editar los servicios actuales o agregar más con el botón inferior.
+    </p>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <label for="cliente">Cliente</label>
+        {{ form.cliente }}
+
+        <label for="fecha">Fecha</label>
+        {{ form.fecha }}
+
+        <label for="marca">Marca</label>
+        <input list="marcas" name="marca" value="{{ form.initial.marca }}">
+        <datalist id="marcas">
+            {% for m in marcas %}<option value="{{ m }}">{% endfor %}
+        </datalist>
+
+        <label for="modelo">Modelo</label>
+        <input list="modelos" name="modelo" value="{{ form.initial.modelo }}">
+        <datalist id="modelos">
+            {% for m in modelos %}<option value="{{ m }}">{% endfor %}
+        </datalist>
+
+        <label for="anio">Año</label>
+        <input list="anios" name="anio" value="{{ form.initial.anio }}">
+        <datalist id="anios">
+            {% for a in anios %}<option value="{{ a }}">{% endfor %}
+        </datalist>
+
+        <h3>Servicios</h3>
+
+        <input type="hidden" name="form-TOTAL_FORMS" id="id_form-TOTAL_FORMS" value="{{ formset.total_form_count }}">
+        <input type="hidden" name="form-INITIAL_FORMS" value="{{ formset.initial_form_count }}">
+        <input type="hidden" name="form-MIN_NUM_FORMS" value="0">
+        <input type="hidden" name="form-MAX_NUM_FORMS" value="1000">
+
+
+        <button type="button" class="btn" onclick="agregarFila()">Agregar Servicio</button>
+
+        <table id="tabla-servicios">
+            <thead>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in formset %}
+                <tr class="{% if f.instance.pk %}servicio-existente{% endif %}">
+                    <td>
+                        {{ f.id }}
+                        {{ f.tipo_servicio }}
+                    </td>
+                    <td>{{ f.cantidad }}</td>
+                    <td>{{ f.precio_unitario }}</td>
+                    <td>{{ f.DELETE }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Total General: <strong id="total-general">$0.00</strong></h3>
+        <p id="advertencia-total" style="color: red; display: none; font-weight: bold;">
+            ⚠️ Total inválido. Verifica que todos los servicios tengan cantidad y precio mayor a cero.
         </p>
-        {% endif %}
 
-        <form method="post">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
+        <button type="submit" class="btn" id="btn-guardar">Guardar Cotización</button>
+        <a href="{% url 'listar_cotizaciones' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
 
-            <label for="cliente">Cliente</label>
-            {{ form.cliente }}
-
-            <label for="fecha">Fecha</label>
-            {{ form.fecha }}
-
-            <label for="marca">Marca</label>
-            <input list="marcas" name="marca" value="{{ form.initial.marca }}">
-            <datalist id="marcas">
-                {% for m in marcas %}<option value="{{ m }}">{% endfor %}
-            </datalist>
-
-            <label for="modelo">Modelo</label>
-            <input list="modelos" name="modelo" value="{{ form.initial.modelo }}">
-            <datalist id="modelos">
-                {% for m in modelos %}<option value="{{ m }}">{% endfor %}
-            </datalist>
-
-            <label for="anio">Año</label>
-            <input list="anios" name="anio" value="{{ form.initial.anio }}">
-            <datalist id="anios">
-                {% for a in anios %}<option value="{{ a }}">{% endfor %}
-            </datalist>
-
-            <h3>Servicios</h3>
-            <button type="button" class="btn" onclick="agregarFila()">+ Agregar Servicio</button>
-
-            {{ formset.management_form }}
-            <table id="tabla-servicios">
-                <thead>
-                    <tr>
-                        <th>Servicio</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for f in formset %}
-                    <tr>
-                        <td>{{ f.tipo_servicio }}</td>
-                        <td>{{ f.cantidad }}</td>
-                        <td>{{ f.precio_unitario }}</td>
-                        <td>{{ f.DELETE }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <h3>Total General: <strong id="total-general">$0.00</strong></h3>
-            <p id="advertencia-total" style="color: red; display: none; font-weight: bold;">
-                ⚠️ Total inválido. Verifica que todos los servicios tengan cantidad y precio mayor a cero.
-            </p>
-
-            <button type="submit" class="btn" id="btn-guardar">Guardar Cotización</button>
-            <a href="{% url 'listar_cotizaciones' %}" class="btn btn-secondary">Cancelar</a>
-        </form>
-    </div>
-
-    <script>
-        function calcularTotalYValidar() {
-            let total = 0;
-            let errores = 0;
-
-            const filas = document.querySelectorAll("#tabla-servicios tbody tr");
-
-            filas.forEach(fila => {
-                const cantidadInput = fila.querySelector(".cantidad-input");
-                const precioInput = fila.querySelector(".precio-input");
-
-                const cantidad = parseFloat(cantidadInput?.value) || 0;
-                const precio = parseFloat(precioInput?.value) || 0;
-
-                if (cantidad <= 0) {
-                    cantidadInput.style.borderColor = "red";
-                    errores++;
-                } else {
-                    cantidadInput.style.borderColor = "";
-                }
-
-                if (precio <= 0) {
-                    precioInput.style.borderColor = "red";
-                    errores++;
-                } else {
-                    precioInput.style.borderColor = "";
-                }
-
-                total += cantidad * precio;
-            });
-
-            document.getElementById("total-general").textContent = `$${total.toFixed(2)}`;
-
-            const advertencia = document.getElementById("advertencia-total");
-            const botonGuardar = document.getElementById("btn-guardar");
-
-            if (total <= 0 || errores > 0) {
-                advertencia.style.display = "block";
-                botonGuardar.disabled = true;
-            } else {
-                advertencia.style.display = "none";
-                botonGuardar.disabled = false;
-            }
-        }
-
-        function agregarFila() {
-            const totalForms = document.getElementById('id_form-TOTAL_FORMS');
-            const formIndex = parseInt(totalForms.value);
-            const tabla = document.querySelector("#tabla-servicios tbody");
-            const nuevaFila = document.createElement("tr");
-
-            nuevaFila.innerHTML = `
-                <td>
-                    <select name="form-${formIndex}-tipo_servicio">
-                        {% for servicio in servicios %}
-                            <option value="{{ servicio.id }}">{{ servicio.nombre_servicio }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td><input type="number" name="form-${formIndex}-cantidad" class="cantidad-input" value="1" min="1" step="1"></td>
-                <td><input type="number" name="form-${formIndex}-precio_unitario" class="precio-input" value="0" step="0.01"></td>
-                <td><input type="checkbox" name="form-${formIndex}-DELETE"></td>
-            `;
-
-            tabla.appendChild(nuevaFila);
-            totalForms.value = formIndex + 1;
-
-            nuevaFila.querySelectorAll(".cantidad-input, .precio-input").forEach(input => {
-                input.addEventListener("input", calcularTotalYValidar);
-            });
-
-            calcularTotalYValidar();
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            document.querySelectorAll(".cantidad-input, .precio-input").forEach(input => {
-                input.addEventListener("input", calcularTotalYValidar);
-            });
-            calcularTotalYValidar();
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".cantidad-input, .precio-input").forEach(input => {
+            input.addEventListener("input", calcularTotalYValidar);
         });
-    </script>
+        calcularTotalYValidar();
+    });
+
+    function calcularTotalYValidar() {
+        let total = 0;
+        let errores = 0;
+
+        document.querySelectorAll("#tabla-servicios tbody tr").forEach(fila => {
+            const cantidadInput = fila.querySelector(".cantidad-input");
+            const precioInput = fila.querySelector(".precio-input");
+
+            const cantidad = parseFloat(cantidadInput?.value) || 0;
+            const precio = parseFloat(precioInput?.value) || 0;
+
+            if (cantidad <= 0) {
+                cantidadInput.style.borderColor = "red";
+                errores++;
+            } else {
+                cantidadInput.style.borderColor = "";
+            }
+
+            if (precio <= 0) {
+                precioInput.style.borderColor = "red";
+                errores++;
+            } else {
+                precioInput.style.borderColor = "";
+            }
+
+            total += cantidad * precio;
+        });
+
+        document.getElementById("total-general").textContent = `$${total.toFixed(2)}`;
+
+        const advertencia = document.getElementById("advertencia-total");
+        const botonGuardar = document.getElementById("btn-guardar");
+
+        if (total <= 0 || errores > 0) {
+            advertencia.style.display = "block";
+            botonGuardar.disabled = true;
+        } else {
+            advertencia.style.display = "none";
+            botonGuardar.disabled = false;
+        }
+    }
+
+    function agregarFila() {
+        const totalForms = document.getElementById("id_form-TOTAL_FORMS");
+        const formIndex = parseInt(totalForms.value);
+        const tabla = document.querySelector("#tabla-servicios tbody");
+        const nuevaFila = document.createElement("tr");
+
+        const nuevaFilaHtml = `
+            <td>
+                <input type="hidden" name="form-${formIndex}-id" value="">
+                <select name="form-${formIndex}-tipo_servicio">
+                    {% for servicio in servicios %}
+                        <option value="{{ servicio.id }}">{{ servicio.nombre_servicio }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="number" name="form-${formIndex}-cantidad" class="cantidad-input" value="1" min="1" step="1">
+            </td>
+            <td>
+                <input type="number" name="form-${formIndex}-precio_unitario" class="precio-input" value="0" step="0.01">
+            </td>
+            <td>
+                <input type="checkbox" name="form-${formIndex}-DELETE">
+            </td>
+        `;
+
+        nuevaFila.innerHTML = nuevaFilaHtml;
+        tabla.appendChild(nuevaFila);
+        totalForms.value = formIndex + 1;
+
+        nuevaFila.querySelectorAll(".cantidad-input, .precio-input").forEach(input => {
+            input.addEventListener("input", calcularTotalYValidar);
+        });
+
+        calcularTotalYValidar();
+    }
+</script>
 </body>
 </html>

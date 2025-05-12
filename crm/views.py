@@ -321,10 +321,11 @@ def registrar_cotizacion(request):
 
 def editar_cotizacion(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
+
     marcas = Cotizacion.objects.values_list('marca', flat=True).distinct()
     modelos = Cotizacion.objects.values_list('modelo', flat=True).distinct()
     anios = Cotizacion.objects.values_list('anio', flat=True).distinct()
-    servicios = CatalogoServicio.objects.all()  # ✅ importante
+    servicios = CatalogoServicio.objects.all()
 
     if request.method == 'POST':
         form = CotizacionForm(request.POST, instance=cotizacion)
@@ -336,8 +337,16 @@ def editar_cotizacion(request, pk):
             cotizacion.modelo = request.POST.get('modelo')
             cotizacion.anio = request.POST.get('anio')
             cotizacion.save()
+
+            formset.instance = cotizacion
             formset.save()
+
             return redirect('listar_cotizaciones')
+        else:
+            # Opcional: mensajes de error para debug si algo falla
+            print("FORM ERRORS:", form.errors)
+            print("FORMSET ERRORS:", formset.errors)
+
     else:
         form = CotizacionForm(instance=cotizacion)
         formset = DetalleCotizacionFormSet(instance=cotizacion)
@@ -349,8 +358,9 @@ def editar_cotizacion(request, pk):
         'marcas': marcas,
         'modelos': modelos,
         'anios': anios,
-        'servicios': servicios  # ✅ para autocompletar dinámico
+        'servicios': servicios
     })
+
 
 
 
