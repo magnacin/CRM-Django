@@ -30,10 +30,15 @@ def formatear_telefono(telefono):
 
 
 # 🔹 Formulario para Cliente
+# 🔹 Formulario para Cliente
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
-        fields = ['nombre', 'apellido', 'telefono', 'email', 'estado']
+        fields = ['nombre', 'apellido', 'telefono', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = False  # ✅ Hacer el campo opcional
 
     def clean_telefono(self):
         telefono = self.cleaned_data.get('telefono')
@@ -42,9 +47,10 @@ class ClienteForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         for field in ['nombre', 'apellido', 'email']:
-            if field in cleaned_data:
+            if field in cleaned_data and cleaned_data[field]:
                 cleaned_data[field] = convertir_a_mayusculas(cleaned_data[field])
         return cleaned_data
+
 
 
 # 🔹 Formulario para Vehiculo

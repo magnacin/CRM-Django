@@ -12,8 +12,8 @@ class Cliente(models.Model):
         max_length=12,
         validators=[RegexValidator(r'^\d{3}-\d{3}-\d{4}$', message="Formato de teléfono inválido (XXX-XXX-XXXX).")]
     )
-    email = models.EmailField()
-    estado = models.CharField(max_length=20, choices=[('Activo', 'Activo'), ('Inactivo', 'Inactivo')])
+    email = models.EmailField(blank = True, null = True)
+    #estado = models.CharField(max_length=20, choices=[('Activo', 'Activo'), ('Inactivo', 'Inactivo')])
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
